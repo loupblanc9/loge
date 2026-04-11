@@ -1,0 +1,188 @@
+// Schéma DossierLoc — aligné maquettes (table, split view, filtres, tags) + spec métier
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  /// Connexion directe (obligatoire pour `migrate` avec Supabase). Pas le pooler :6543.
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  client
+  admin
+}
+
+enum DossierStatus {
+  incomplete
+  review
+  complete
+}
+
+enum DocumentStatus {
+  missing
+  uploaded
+  approved
+  rejected
+}
+
+enum DocumentPriority {
+  normal
+  high
+}
+
+/// Compteur atomique pour références DOSSIER-XXXX
+model DossierSequence {
+  id    String @id @default("default")
+  value Int    @default(0)
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  /// Nom affiché (locataire / candidat) — maquette « Nom client »
+  name      String
+  avatarUrl String?
+  role      Role     @default(client)
+  createdAt DateTime @default(now())
+
+  dossiers Dossier[]
+  notes    Note[]
+
+  @@index([email])
+}
+
+model Dossier {
+  id        String @id @default(cuid())
+  /// Référence unique type DOSSIER-0001
+  reference String @unique
+  /// Bien loué / intitulé dossier (maquette)
+  title     String @default("")
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status   DossierStatus @default(incomplete)
+  progress Int           @default(0)
+  /// Dossier jamais ouvert par l’utilisateur (filtre « Non ouvert »)
+  isOpened Boolean       @default(false)
+  openedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents   Document[]
+  guarantors  Guarantor[]
+  dossierTags DossierTag[]
+  notes       Note[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([progress])
+  @@index([isOpened])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([status, updatedAt])
+  @@index([userId, status])
+}
+
+model Document {
+  id        String @id @default(cuid())
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  /// Types métier : ID, RIB, TAX, CONTRACT, etc.
+  type      String
+  fileUrl   String?
+  fileName  String?
+  mimeType  String?
+  sizeBytes Int?
+
+  status   DocumentStatus   @default(missing)
+  priority DocumentPriority @default(normal)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dossierId, type])
+  @@index([dossierId])
+  @@index([status])
+  @@index([dossierId, status])
+}
+
+model Guarantor {
+  id        String  @id @default(cuid())
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  name      String?
+  createdAt DateTime @default(now())
+
+  documents GuarantorDocument[]
+
+  @@index([dossierId])
+}
+
+model GuarantorDocument {
+  id          String    @id @default(cuid())
+  guarantorId String
+  guarantor   Guarantor @relation(fields: [guarantorId], references: [id], onDelete: Cascade)
+
+  type      String
+  fileUrl   String?
+  fileName  String?
+  mimeType  String?
+  sizeBytes Int?
+
+  status   DocumentStatus   @default(missing)
+  priority DocumentPriority @default(normal)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guarantorId, type])
+  @@index([guarantorId])
+  @@index([status])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String
+  createdAt DateTime @default(now())
+
+  dossierTags DossierTag[]
+
+  @@index([name])
+}
+
+model DossierTag {
+  id        String @id @default(cuid())
+  dossierId String
+  tagId     String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([dossierId, tagId])
+  @@index([dossierId])
+  @@index([tagId])
+}
+
+model Note {
+  id        String @id @default(cuid())
+  dossierId String
+  dossier   Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([dossierId])
+  @@index([authorId])
+}
