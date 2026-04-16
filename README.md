@@ -1,4 +1,4 @@
-## DossierLoc (SaaS dossiers locatifs)
+## Domicial (SaaS dossiers locatifs)
 
 Monolithe **Next.js App Router** (UI + API) avec **PostgreSQL/Supabase + Prisma**.
 

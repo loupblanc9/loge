@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DossierLoc — Gestion des dossiers locatifs",
+  title: "Domicial — Gestion des dossiers locatifs",
   description: "Application SaaS de gestion de dossiers locatifs",
 };
 

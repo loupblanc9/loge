@@ -24,7 +24,7 @@ export function Sidebar({ user }: { user: SessionUser }) {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-slate-800/80 bg-[#0f172a] text-white">
       <div className="flex h-14 items-center gap-2 border-b border-white/10 px-4">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-sm font-bold">D</span>
-        <span className="text-sm font-semibold tracking-tight">DossierLoc</span>
+        <span className="text-sm font-semibold tracking-tight">Domicial</span>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
         {nav

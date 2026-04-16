@@ -32,7 +32,7 @@ export default function LoginPage() {
       <div className="mb-6 flex items-center gap-2">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-lg font-bold text-white">D</span>
         <div>
-          <h1 className="text-lg font-semibold text-[#111827]">DossierLoc</h1>
+          <h1 className="text-lg font-semibold text-[#111827]">Domicial</h1>
           <p className="text-sm text-[#374151]">Connexion</p>
         </div>
       </div>

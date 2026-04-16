@@ -35,7 +35,7 @@ export function MobileTopBar({
             D
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-[#111827]">DossierLoc</div>
+            <div className="text-sm font-semibold text-[#111827]">Domicial</div>
             <div className="text-[11px] text-[#374151]">Bonjour, {user.name.split(" ")[0] ?? user.name}</div>
           </div>
           {showFilters && (
