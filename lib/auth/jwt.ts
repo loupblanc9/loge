@@ -9,10 +9,14 @@ export type JwtPayload = {
 };
 
 const getSecret = () => new TextEncoder().encode(getEnv().JWT_SECRET);
+const getIssuer = () => getEnv().JWT_ISSUER ?? "dossierloc";
+const getAudience = () => getEnv().JWT_AUDIENCE ?? "dossierloc-users";
 
 export async function signToken(payload: JwtPayload, expiresIn = "7d"): Promise<string> {
   return new SignJWT({ role: payload.role, email: payload.email })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(getIssuer())
+    .setAudience(getAudience())
     .setSubject(payload.sub)
     .setIssuedAt()
     .setExpirationTime(expiresIn)
@@ -21,7 +25,11 @@ export async function signToken(payload: JwtPayload, expiresIn = "7d"): Promise<
 
 export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecret());
+    const { payload } = await jwtVerify(token, getSecret(), {
+      issuer: getIssuer(),
+      audience: getAudience(),
+      algorithms: ["HS256"],
+    });
     const sub = payload.sub;
     const role = payload.role as Role | undefined;
     const email = payload.email as string | undefined;

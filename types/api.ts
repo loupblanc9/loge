@@ -16,6 +16,7 @@ export type DossierListItem = {
   id: string;
   reference: string;
   title: string;
+  dossierType?: "social" | "prive";
   status: DossierStatus;
   progress: number;
   isOpened: boolean;
@@ -85,6 +86,7 @@ export type DossierDetail = {
   id: string;
   reference: string;
   title: string;
+  dossierType?: "social" | "prive";
   userId: string;
   status: DossierStatus;
   progress: number;

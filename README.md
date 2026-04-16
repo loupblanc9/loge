@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## DossierLoc (SaaS dossiers locatifs)
 
-## Getting Started
+Monolithe **Next.js App Router** (UI + API) avec **PostgreSQL/Supabase + Prisma**.
 
-First, run the development server:
+### Fonctionnalités
+
+- Auth : inscription/connexion/déconnexion + session (`/api/auth/*`)
+- Dossiers : création, listing filtré/trié/paginé, détail, split view (`/api/dossiers*`)
+- Documents : upload PDF/JPG/PNG, validation/rejet admin, bulk (`/api/dossiers/*/documents/*`)
+- Tags : CRUD admin + assignation dossier (`/api/tags`, `/api/dossiers/:id/tags`)
+- Admin : actions groupées (`/api/admin/dossiers/bulk`)
+
+### Démarrer en local
+
+1. Créer un fichier `.env` à partir de `.env.example` (ne jamais committer `.env`).
+2. Appliquer les tables (via Supabase SQL Editor ou Prisma migrations).
+3. Seed (compte admin + client) :
+
+```bash
+npm run db:seed
+```
+
+4. Lancer :
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Déploiement (Vercel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Voir `GUIDE_VERCEL.md`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Variables d’environnement (production)
 
-## Learn More
+Minimum :
 
-To learn more about Next.js, take a look at the following resources:
+- `DATABASE_URL`
+- `DIRECT_URL` (souvent **session pooler** si IPv4)
+- `JWT_SECRET` (32+ caractères aléatoires)
+- `NEXT_PUBLIC_APP_URL` (ex. `https://ton-projet.vercel.app`)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Optionnel recommandé :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `JWT_ISSUER` (défaut `dossierloc`)
+- `JWT_AUDIENCE` (défaut `dossierloc-users`)
 
-## Deploy on Vercel
+### Sécurité
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Ne jamais committer `.env`
+- En cas de fuite : changer les mots de passe DB + `JWT_SECRET`

@@ -6,6 +6,8 @@ import {
   uploadGuarantorDocument,
 } from "@/services/document.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
+import { getEnv } from "@/lib/env";
+import { zDocumentStatus } from "@/lib/constants/validation";
 
 type Ctx = { params: Promise<{ guarantorId: string; docId: string }> };
 
@@ -17,6 +19,9 @@ export async function POST(req: Request, ctx: Ctx) {
     const file = form.get("file");
     if (!file || !(file instanceof File)) {
       return jsonError("Fichier manquant (champ « file »)", 400);
+    }
+    if (file.size > getEnv().MAX_FILE_BYTES) {
+      return jsonError(`Fichier trop volumineux (max ${getEnv().MAX_FILE_BYTES} octets)`, 400);
     }
     const buf = Buffer.from(await file.arrayBuffer());
     const result = await uploadGuarantorDocument(
@@ -39,7 +44,7 @@ export async function POST(req: Request, ctx: Ctx) {
 }
 
 const patchSchema = z.object({
-  status: z.enum(["missing", "uploaded", "approved", "rejected"]),
+  status: zDocumentStatus,
 });
 
 export async function PATCH(req: Request, ctx: Ctx) {

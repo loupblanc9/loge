@@ -3,15 +3,13 @@ import { z } from "zod";
 import { requireAuth, isAdmin } from "@/lib/auth/get-session";
 import { deleteTag, updateTag } from "@/services/tag.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
+import { zHexColor } from "@/lib/constants/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
-  color: z
-    .string()
-    .regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
-    .optional(),
+  color: zHexColor.optional(),
 });
 
 export async function PATCH(req: Request, ctx: Ctx) {

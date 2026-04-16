@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth, isAdmin } from "@/lib/auth/get-session";
 import { createTag, listTags } from "@/services/tag.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
+import { zHexColor } from "@/lib/constants/validation";
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
 
 const createSchema = z.object({
   name: z.string().min(1),
-  color: z.string().regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, "Couleur hex attendue (#RGB ou #RRGGBB)"),
+  color: zHexColor,
 });
 
 export async function POST(req: Request) {

@@ -22,6 +22,11 @@ enum DossierStatus {
   complete
 }
 
+enum DossierType {
+  social
+  prive
+}
+
 enum DocumentStatus {
   missing
   uploaded
@@ -62,6 +67,8 @@ model Dossier {
   reference String @unique
   /// Bien loué / intitulé dossier (maquette)
   title     String @default("")
+  /// Type de dossier (mobile onboarding)
+  dossierType DossierType @default(prive)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

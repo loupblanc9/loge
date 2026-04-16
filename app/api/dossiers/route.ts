@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth, isAdmin } from "@/lib/auth/get-session";
-import { createDossier, listDossiers, parseListQuery } from "@/services/dossier.service";
+import { createDossierWithType, listDossiers, parseListQuery } from "@/services/dossier.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
 
 export async function GET(req: Request) {
@@ -21,6 +21,7 @@ export async function GET(req: Request) {
 
 const createSchema = z.object({
   title: z.string().optional(),
+  dossierType: z.enum(["social", "prive"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     const json = await req.json().catch(() => ({}));
     const parsed = createSchema.safeParse(json);
     if (!parsed.success) return jsonError("Données invalides", 400);
-    const row = await createDossier(user.id, parsed.data.title);
+    const row = await createDossierWithType(user.id, parsed.data.dossierType ?? "prive", parsed.data.title);
     return NextResponse.json({ dossier: row }, { status: 201 });
   } catch (e) {
     return handleRouteError(e);

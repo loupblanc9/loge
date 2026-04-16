@@ -5,6 +5,7 @@ import { useMemo, useCallback } from "react";
 import type { SessionUser } from "@/types/api";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { MobileShell } from "./MobileShell";
 import { defaultFilterState, type FilterState } from "@/types/filters";
 import { filtersToSearchParams, parseFilters } from "@/lib/filter-url";
 
@@ -49,25 +50,35 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const mergedFilterState = useMemo(() => ({ ...defaultFilterState, ...filterState }), [filterState]);
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pl-[240px]">
-      <Sidebar user={user} />
-      <div className="flex min-h-screen flex-col">
-        <TopBar
-          user={user}
-          showFilters={showFilters}
-          filterState={mergedFilterState}
-          onApplyFilters={applyFilters}
-          onResetFilters={resetFilters}
-          listSearchParams={showFilters ? searchParams : undefined}
-          onCommitListQuery={showFilters ? commitListQuery : undefined}
-          searchPlaceholder={
-            pathname.includes("/dossiers/vue")
-              ? "Rechercher…"
-              : "Rechercher un dossier, un locataire…"
-          }
-        />
-        <div className="flex-1 p-6">{children}</div>
+    <>
+      {/* Desktop (inchangé) */}
+      <div className="hidden min-h-screen bg-[#F9FAFB] pl-[240px] md:block">
+        <Sidebar user={user} />
+        <div className="flex min-h-screen flex-col">
+          <TopBar
+            user={user}
+            showFilters={showFilters}
+            filterState={mergedFilterState}
+            onApplyFilters={applyFilters}
+            onResetFilters={resetFilters}
+            listSearchParams={showFilters ? searchParams : undefined}
+            onCommitListQuery={showFilters ? commitListQuery : undefined}
+            searchPlaceholder={
+              pathname.includes("/dossiers/vue")
+                ? "Rechercher…"
+                : "Rechercher un dossier, un locataire…"
+            }
+          />
+          <div className="flex-1 p-6">{children}</div>
+        </div>
       </div>
-    </div>
+
+      {/* Mobile (nouveau) */}
+      <div className="md:hidden">
+        <MobileShell user={user} showFilters={showFilters} filterState={mergedFilterState} onApplyFilters={applyFilters} onResetFilters={resetFilters}>
+          {children}
+        </MobileShell>
+      </div>
+    </>
   );
 }

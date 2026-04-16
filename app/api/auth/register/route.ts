@@ -5,6 +5,8 @@ import { hashPassword } from "@/lib/auth/password";
 import { signToken } from "@/lib/auth/jwt";
 import { setAuthCookie } from "@/lib/auth/cookies";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
+import { getClientIp } from "@/lib/security/request-ip";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -14,6 +16,14 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rate = checkRateLimit(`register:${ip}`, 5, 60_000);
+    if (!rate.ok) {
+      return jsonError("Trop de créations de compte, réessayez dans un instant", 429, {
+        retryAfterSec: rate.retryAfterSec,
+      });
+    }
+
     const json = await req.json();
     const parsed = bodySchema.safeParse(json);
     if (!parsed.success) {

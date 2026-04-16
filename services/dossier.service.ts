@@ -1,6 +1,6 @@
 import type { DossierStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { TENANT_DOCUMENT_TYPES } from "@/lib/constants/document-types";
+import { GUARANTOR_DOCUMENT_TYPES, PRIVATE_DOCUMENT_TYPES, SOCIAL_DOCUMENT_TYPES, TENANT_DOCUMENT_TYPES } from "@/lib/constants/document-types";
 import {
   dossierListInclude,
   recalculateDossier,
@@ -193,6 +193,21 @@ function orderByFromSort(sort: string): Prisma.DossierOrderByWithRelationInput[]
 }
 
 export async function createDossier(userId: string, title?: string) {
+  return createDossierWithType(userId, "prive", title);
+}
+
+export async function createDossierWithType(
+  userId: string,
+  dossierType: "social" | "prive",
+  title?: string,
+) {
+  const docDefs =
+    dossierType === "social"
+      ? SOCIAL_DOCUMENT_TYPES
+      : dossierType === "prive"
+        ? PRIVATE_DOCUMENT_TYPES
+        : TENANT_DOCUMENT_TYPES;
+
   const dossier = await prisma.$transaction(async (tx) => {
     const reference = await nextReference(tx);
     return tx.dossier.create({
@@ -202,13 +217,32 @@ export async function createDossier(userId: string, title?: string) {
         userId,
         status: "incomplete",
         progress: 0,
+        dossierType,
         documents: {
-          create: TENANT_DOCUMENT_TYPES.map((d) => ({
+          create: docDefs.map((d) => ({
             type: d.type,
             status: "missing" as const,
-            priority: d.priority ?? "normal",
+            priority: d.required || d.priority === "high" ? "high" : "normal",
           })),
         },
+        ...(dossierType === "prive"
+          ? {
+              guarantors: {
+                create: [
+                  {
+                    name: "Garant",
+                    documents: {
+                      create: GUARANTOR_DOCUMENT_TYPES.map((d) => ({
+                        type: d.type,
+                        status: "missing" as const,
+                        priority: d.priority ?? "normal",
+                      })),
+                    },
+                  },
+                ],
+              },
+            }
+          : {}),
       },
     });
   });

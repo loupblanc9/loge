@@ -2,7 +2,8 @@ import { z } from "zod";
 
 const schema = z.object({
   DATABASE_URL: z.string().min(1),
-  JWT_SECRET: z.string().min(16),
+  // Secret JWT fort (32+ recommandé)
+  JWT_SECRET: z.string().min(32),
   MAX_FILE_BYTES: z.coerce.number().default(10 * 1024 * 1024),
   UPLOAD_DIR: z.string().default("./uploads"),
   STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
@@ -11,6 +12,8 @@ const schema = z.object({
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_PUBLIC_BASE_URL: z.string().optional(),
+  JWT_ISSUER: z.string().optional(),
+  JWT_AUDIENCE: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().optional(),
 });
 

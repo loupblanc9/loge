@@ -72,7 +72,8 @@ export function useLogout() {
 export function useCreateDossier() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { title?: string }) => apiFetch("/api/dossiers", { method: "POST", json: body }),
+    mutationFn: (body: { title?: string; dossierType?: "social" | "prive" }) =>
+      apiFetch("/api/dossiers", { method: "POST", json: body }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dossiers"] }),
   });
 }

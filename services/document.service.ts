@@ -16,6 +16,20 @@ export function assertAllowedUpload(mimeType: string, size: number) {
   }
 }
 
+function hasKnownSignature(mimeType: string, buffer: Buffer): boolean {
+  if (mimeType === "application/pdf") {
+    return buffer.length >= 4 && buffer.subarray(0, 4).toString("ascii") === "%PDF";
+  }
+  if (mimeType === "image/jpeg") {
+    return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+  if (mimeType === "image/png") {
+    const pngSig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    return buffer.length >= 8 && pngSig.every((b, i) => buffer[i] === b);
+  }
+  return false;
+}
+
 function extractKeyFromFileUrl(fileUrl: string): string | null {
   if (!fileUrl.startsWith("/api/files/")) return null;
   try {
@@ -34,6 +48,9 @@ export async function uploadTenantDocument(
   opts: { userId: string; admin: boolean },
 ) {
   assertAllowedUpload(mimeType, buffer.length);
+  if (!hasKnownSignature(mimeType, buffer)) {
+    throw Object.assign(new Error("Signature de fichier invalide pour le type déclaré"), { status: 400 });
+  }
 
   const dossier = await prisma.dossier.findUnique({
     where: { id: dossierId },
@@ -113,6 +130,9 @@ export async function uploadGuarantorDocument(
   opts: { userId: string; admin: boolean },
 ) {
   assertAllowedUpload(mimeType, buffer.length);
+  if (!hasKnownSignature(mimeType, buffer)) {
+    throw Object.assign(new Error("Signature de fichier invalide pour le type déclaré"), { status: 400 });
+  }
 
   const guarantor = await prisma.guarantor.findUnique({
     where: { id: guarantorId },
