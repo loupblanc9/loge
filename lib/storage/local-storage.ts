@@ -9,7 +9,19 @@ export class LocalFileStorage implements FileStorage {
   private baseDir: string;
 
   constructor() {
-    this.baseDir = path.resolve(process.cwd(), getEnv().UPLOAD_DIR);
+    const env = getEnv();
+    const configured = env.UPLOAD_DIR.trim();
+    const resolved = path.isAbsolute(configured)
+      ? configured
+      : path.resolve(process.cwd(), configured);
+
+    // Vercel (serverless) : le dépôt est en lecture seule — seul /tmp est fiable en écriture.
+    // Sans ça, fs.writeFile sur ./uploads → 500 « Erreur serveur » à l’upload.
+    if (process.env.VERCEL === "1" && !resolved.startsWith("/tmp")) {
+      this.baseDir = "/tmp/dossierloc-uploads";
+    } else {
+      this.baseDir = resolved;
+    }
   }
 
   async put(
