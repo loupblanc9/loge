@@ -30,6 +30,61 @@ function hasKnownSignature(mimeType: string, buffer: Buffer): boolean {
   return false;
 }
 
+function detectMimeFromBuffer(buffer: Buffer): string | null {
+  if (buffer.length >= 4 && buffer.subarray(0, 4).toString("ascii") === "%PDF") return "application/pdf";
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  const pngSig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (buffer.length >= 8 && pngSig.every((b, i) => buffer[i] === b)) return "image/png";
+  return null;
+}
+
+function mimeFromExtension(originalName: string): string | null {
+  const m = originalName.toLowerCase().match(/\.([a-z0-9]+)$/);
+  if (!m) return null;
+  switch (m[1]) {
+    case "pdf":
+      return "application/pdf";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    default:
+      return null;
+  }
+}
+
+function normalizeDeclaredMime(m: string): string {
+  const t = m.trim().toLowerCase();
+  if (t === "image/jpg") return "image/jpeg";
+  return t;
+}
+
+/** Déclaration navigateur souvent vide ou `application/octet-stream` sur mobile — on s’appuie sur les magic bytes. */
+export function resolveMimeForUpload(buffer: Buffer, declaredMime: string, originalName: string): string {
+  const declared = normalizeDeclaredMime(declaredMime);
+  const detected = detectMimeFromBuffer(buffer);
+  const fromExt = mimeFromExtension(originalName);
+
+  const candidates: string[] = [];
+  if (detected) candidates.push(detected);
+  if (declared && declared !== "application/octet-stream") candidates.push(declared);
+  if (fromExt) candidates.push(fromExt);
+
+  const seen = new Set<string>();
+  for (const mime of candidates) {
+    if (!mime || seen.has(mime)) continue;
+    seen.add(mime);
+    if (!ALLOWED_MIME.has(mime)) continue;
+    if (!hasKnownSignature(mime, buffer)) continue;
+    return mime;
+  }
+
+  throw Object.assign(new Error("Format non autorisé ou fichier non reconnu (PDF, JPG, PNG uniquement)"), {
+    status: 400,
+  });
+}
+
 function extractKeyFromFileUrl(fileUrl: string): string | null {
   if (!fileUrl.startsWith("/api/files/")) return null;
   try {
@@ -47,10 +102,8 @@ export async function uploadTenantDocument(
   mimeType: string,
   opts: { userId: string; admin: boolean },
 ) {
-  assertAllowedUpload(mimeType, buffer.length);
-  if (!hasKnownSignature(mimeType, buffer)) {
-    throw Object.assign(new Error("Signature de fichier invalide pour le type déclaré"), { status: 400 });
-  }
+  const resolvedMime = resolveMimeForUpload(buffer, mimeType, originalName);
+  assertAllowedUpload(resolvedMime, buffer.length);
 
   const dossier = await prisma.dossier.findUnique({
     where: { id: dossierId },
@@ -69,7 +122,7 @@ export async function uploadTenantDocument(
 
   const storage = getStorage();
   const { key, publicUrl } = await storage.put(buffer, {
-    mimeType,
+    mimeType: resolvedMime,
     sizeBytes: buffer.length,
     originalName,
     key: `${dossierId}/tenant/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`,
@@ -80,7 +133,7 @@ export async function uploadTenantDocument(
     data: {
       fileUrl: publicUrl,
       fileName: originalName,
-      mimeType,
+      mimeType: resolvedMime,
       sizeBytes: buffer.length,
       status: "uploaded",
     },
@@ -129,10 +182,8 @@ export async function uploadGuarantorDocument(
   mimeType: string,
   opts: { userId: string; admin: boolean },
 ) {
-  assertAllowedUpload(mimeType, buffer.length);
-  if (!hasKnownSignature(mimeType, buffer)) {
-    throw Object.assign(new Error("Signature de fichier invalide pour le type déclaré"), { status: 400 });
-  }
+  const resolvedMime = resolveMimeForUpload(buffer, mimeType, originalName);
+  assertAllowedUpload(resolvedMime, buffer.length);
 
   const guarantor = await prisma.guarantor.findUnique({
     where: { id: guarantorId },
@@ -151,7 +202,7 @@ export async function uploadGuarantorDocument(
 
   const storage = getStorage();
   const { publicUrl } = await storage.put(buffer, {
-    mimeType,
+    mimeType: resolvedMime,
     sizeBytes: buffer.length,
     originalName,
     key: `${guarantor.dossierId}/guarantor/${guarantorId}/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`,
@@ -162,7 +213,7 @@ export async function uploadGuarantorDocument(
     data: {
       fileUrl: publicUrl,
       fileName: originalName,
-      mimeType,
+      mimeType: resolvedMime,
       sizeBytes: buffer.length,
       status: "uploaded",
     },

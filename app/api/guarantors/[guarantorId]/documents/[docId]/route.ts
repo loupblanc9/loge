@@ -6,6 +6,7 @@ import {
   uploadGuarantorDocument,
 } from "@/services/document.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
+import { getFormDataFileBlob, uploadDeclaredMime, uploadOriginalName } from "@/lib/api/form-file";
 import { getEnv } from "@/lib/env";
 import { zDocumentStatus } from "@/lib/constants/validation";
 
@@ -16,20 +17,20 @@ export async function POST(req: Request, ctx: Ctx) {
     const user = await requireAuth();
     const { guarantorId, docId } = await ctx.params;
     const form = await req.formData();
-    const file = form.get("file");
-    if (!file || !(file instanceof File)) {
+    const blob = getFormDataFileBlob(form, "file");
+    if (!blob) {
       return jsonError("Fichier manquant (champ « file »)", 400);
     }
-    if (file.size > getEnv().MAX_FILE_BYTES) {
+    if (blob.size > getEnv().MAX_FILE_BYTES) {
       return jsonError(`Fichier trop volumineux (max ${getEnv().MAX_FILE_BYTES} octets)`, 400);
     }
-    const buf = Buffer.from(await file.arrayBuffer());
+    const buf = Buffer.from(await blob.arrayBuffer());
     const result = await uploadGuarantorDocument(
       guarantorId,
       docId,
       buf,
-      file.name,
-      file.type || "application/octet-stream",
+      uploadOriginalName(blob),
+      uploadDeclaredMime(blob),
       { userId: user.id, admin: isAdmin(user.role) },
     );
     if (result.error === "NOT_FOUND") return jsonError("Garant ou document introuvable", 404);

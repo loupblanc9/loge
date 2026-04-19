@@ -17,6 +17,7 @@ import {
 import { labelForType } from "@/lib/constants/document-types";
 import { dossierStatusUi, documentStatusUi } from "@/lib/dossier-status-ui";
 import { formatDateTimeFr } from "@/lib/format";
+import { canUploadDocumentStatus, firstDocSlotForUpload } from "@/lib/upload-slot";
 import { TagBadges } from "./TagBadges";
 import { TagPickerModal } from "./TagPickerModal";
 
@@ -260,6 +261,7 @@ function DocumentListSection({
 }) {
   const patchT = usePatchDocument(dossierId);
   const uploadT = useUploadTenantDoc(dossierId);
+  const [tenantUploadOkId, setTenantUploadOkId] = useState<string | null>(null);
 
   if (documents.length) {
     return (
@@ -274,20 +276,53 @@ function DocumentListSection({
                   {documentStatusUi(d.status).label}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {canUpload && d.status === "missing" && (
-                  <label className="cursor-pointer rounded-lg bg-[#2563EB] px-3 py-1.5 text-xs font-medium text-white">
-                    Ajouter
+              <div className="flex flex-wrap items-center gap-2">
+                {canUpload && canUploadDocumentStatus(d.status) && (
+                  <label
+                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                      uploadT.isPending && uploadT.variables?.docId === d.id ? "bg-blue-400" : "bg-[#2563EB]"
+                    }`}
+                  >
+                    {uploadT.isPending && uploadT.variables?.docId === d.id
+                      ? "Envoi…"
+                      : d.status === "rejected"
+                        ? "Renvoyer"
+                        : "Ajouter"}
                     <input
                       type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
+                      accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                       className="hidden"
+                      disabled={uploadT.isPending}
                       onChange={(e) => {
                         const f = e.target.files?.[0];
-                        if (f) uploadT.mutate({ docId: d.id, file: f }, { onSuccess: onRefresh });
+                        const input = e.target;
+                        if (f) {
+                          uploadT.mutate(
+                            { docId: d.id, file: f },
+                            {
+                              onSuccess: () => {
+                                onRefresh();
+                                setTenantUploadOkId(d.id);
+                                window.setTimeout(() => setTenantUploadOkId((cur) => (cur === d.id ? null : cur)), 2500);
+                                input.value = "";
+                              },
+                              onError: () => {
+                                input.value = "";
+                              },
+                            },
+                          );
+                        } else input.value = "";
                       }}
                     />
                   </label>
+                )}
+                {tenantUploadOkId === d.id && (
+                  <span className="w-full text-xs font-medium text-[#16A34A]">Document ajouté</span>
+                )}
+                {uploadT.isError && uploadT.variables?.docId === d.id && (
+                  <span className="w-full text-xs text-[#DC2626]">
+                    {uploadT.error instanceof Error ? uploadT.error.message : "Échec de l’envoi"}
+                  </span>
                 )}
                 {admin && d.status === "uploaded" && (
                   <>
@@ -352,6 +387,8 @@ function GuarantorBlock({
 }) {
   const patchG = usePatchGuarantorDocument(dossierId);
   const uploadG = useUploadGuarantorDoc(dossierId);
+  const [gUploadOkKey, setGUploadOkKey] = useState<string | null>(null);
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-100 px-4 py-2 text-sm font-semibold text-[#111827]">
@@ -369,20 +406,54 @@ function GuarantorBlock({
                 {documentStatusUi(d.status).label}
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {canUpload && d.status === "missing" && (
-                <label className="cursor-pointer rounded-lg bg-[#2563EB] px-3 py-1.5 text-xs font-medium text-white">
-                  Ajouter le document
+            <div className="flex flex-wrap items-center gap-2">
+              {canUpload && canUploadDocumentStatus(d.status) && (
+                <label
+                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
+                    uploadG.isPending && uploadG.variables?.docId === d.id ? "bg-blue-400" : "bg-[#2563EB]"
+                  }`}
+                >
+                  {uploadG.isPending && uploadG.variables?.docId === d.id
+                    ? "Envoi…"
+                    : d.status === "rejected"
+                      ? "Renvoyer le document"
+                      : "Ajouter le document"}
                   <input
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                     className="hidden"
+                    disabled={uploadG.isPending}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
-                      if (f) uploadG.mutate({ guarantorId: g.id, docId: d.id, file: f }, { onSuccess: onRefresh });
+                      const input = e.target;
+                      if (f) {
+                        const key = `${g.id}:${d.id}`;
+                        uploadG.mutate(
+                          { guarantorId: g.id, docId: d.id, file: f },
+                          {
+                            onSuccess: () => {
+                              onRefresh();
+                              setGUploadOkKey(key);
+                              window.setTimeout(() => setGUploadOkKey((cur) => (cur === key ? null : cur)), 2500);
+                              input.value = "";
+                            },
+                            onError: () => {
+                              input.value = "";
+                            },
+                          },
+                        );
+                      } else input.value = "";
                     }}
                   />
                 </label>
+              )}
+              {gUploadOkKey === `${g.id}:${d.id}` && (
+                <span className="w-full text-xs font-medium text-[#16A34A]">Document ajouté</span>
+              )}
+              {uploadG.isError && uploadG.variables?.docId === d.id && uploadG.variables?.guarantorId === g.id && (
+                <span className="w-full text-xs text-[#DC2626]">
+                  {uploadG.error instanceof Error ? uploadG.error.message : "Échec de l’envoi"}
+                </span>
               )}
               {admin && d.status === "uploaded" && (
                 <>
@@ -428,20 +499,60 @@ function GuarantorBlock({
 function UploadZone({ dossierId, onUploaded }: { dossierId: string; onUploaded: () => void }) {
   const uploadT = useUploadTenantDoc(dossierId);
   const { data } = useDossier(dossierId);
-  const firstMissing = data?.dossier.documents.find((d) => d.status === "missing");
+  const slot = data?.dossier.documents ? firstDocSlotForUpload(data.dossier.documents) : null;
+  const [justOk, setJustOk] = useState(false);
   return (
-    <label className="m-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-[#F9FAFB] px-4 py-8 text-center text-sm text-[#374151] hover:bg-gray-100">
-      <span className="text-xl">☁</span>
-      <span className="mt-2">Glisser-déposer ou cliquer — le premier document « manquant » sera rempli.</span>
-      <input
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f && firstMissing) uploadT.mutate({ docId: firstMissing.id, file: f }, { onSuccess: onUploaded });
-        }}
-      />
-    </label>
+    <div className="m-4">
+      <label
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-[#F9FAFB] px-4 py-8 text-center text-sm text-[#374151] hover:bg-gray-100 ${
+          uploadT.isPending ? "pointer-events-none opacity-70" : ""
+        }`}
+      >
+        <span className="text-xl">{uploadT.isPending ? "⏳" : "☁"}</span>
+        <span className="mt-2 font-medium text-[#111827]">
+          {uploadT.isPending ? "Upload en cours…" : "Glisser-déposer ou cliquer"}
+        </span>
+        <span className="mt-1 text-xs text-[#374151]">
+          {slot
+            ? `Le prochain envoi remplira : ${labelForType(slot.type)}`
+            : "Aucun document locataire à compléter (manquant ou refusé)."}
+        </span>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          className="hidden"
+          disabled={uploadT.isPending || !slot}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            const input = e.target;
+            const current = data?.dossier.documents ? firstDocSlotForUpload(data.dossier.documents) : null;
+            if (f && current) {
+              uploadT.mutate(
+                { docId: current.id, file: f },
+                {
+                  onSuccess: () => {
+                    onUploaded();
+                    setJustOk(true);
+                    window.setTimeout(() => setJustOk(false), 2500);
+                    input.value = "";
+                  },
+                  onError: () => {
+                    input.value = "";
+                  },
+                },
+              );
+            } else input.value = "";
+          }}
+        />
+      </label>
+      {justOk && (
+        <p className="mt-2 text-center text-xs font-medium text-[#16A34A]">Document ajouté</p>
+      )}
+      {uploadT.isError && (
+        <p className="mt-2 text-center text-xs text-[#DC2626]">
+          {uploadT.error instanceof Error ? uploadT.error.message : "Échec de l’envoi"}
+        </p>
+      )}
+    </div>
   );
 }

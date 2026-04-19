@@ -16,6 +16,7 @@ import {
 import { dossierStatusUi, documentStatusUi } from "@/lib/dossier-status-ui";
 import { labelForType, PRIVATE_DOCUMENT_TYPES, SOCIAL_DOCUMENT_TYPES } from "@/lib/constants/document-types";
 import { formatDateTimeFr } from "@/lib/format";
+import { firstDocSlotForUpload } from "@/lib/upload-slot";
 
 type SectionKey = "infos" | "tenant" | "guarantor" | "notes";
 
@@ -33,6 +34,7 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
   const notesQ = useNotes(dossierId, admin);
   const addNote = useAddNote(dossierId);
   const [note, setNote] = useState("");
+  const [uploadOkFlash, setUploadOkFlash] = useState(false);
 
   const [open, setOpen] = useState<Record<SectionKey, boolean>>({
     infos: true,
@@ -75,6 +77,9 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
     return m;
   }, [dossier]);
 
+  const tenantUploadSlot = useMemo(() => firstDocSlotForUpload(dossier?.documents ?? []), [dossier?.documents]);
+  const uploadBusy = uploadTenant.isPending || uploadGuarantor.isPending;
+
   if (isLoading || !dossier || !st) {
     return <div className="py-10 text-center text-sm text-gray-500">Chargement…</div>;
   }
@@ -108,6 +113,26 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
             {counts.missing} document(s) manquant(s)
           </div>
         )}
+
+        {uploadOkFlash && !uploadBusy && (
+          <div className="mt-3 rounded-2xl bg-emerald-50 px-3 py-2 text-xs font-medium text-[#16A34A]">Document ajouté</div>
+        )}
+        {uploadBusy && (
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-blue-50 px-3 py-2 text-xs font-medium text-[#2563EB]">
+            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" aria-hidden />
+            Upload en cours…
+          </div>
+        )}
+        {!uploadBusy && uploadTenant.isError && (
+          <div className="mt-3 rounded-2xl bg-red-50 px-3 py-2 text-xs font-medium text-[#DC2626]">
+            {uploadTenant.error instanceof Error ? uploadTenant.error.message : "Échec de l’envoi (locataire)"}
+          </div>
+        )}
+        {!uploadBusy && !uploadTenant.isError && uploadGuarantor.isError && (
+          <div className="mt-3 rounded-2xl bg-red-50 px-3 py-2 text-xs font-medium text-[#DC2626]">
+            {uploadGuarantor.error instanceof Error ? uploadGuarantor.error.message : "Échec de l’envoi (garant)"}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 space-y-3">
@@ -132,7 +157,27 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
                 key={doc.id}
                 doc={doc}
                 required={requiredMap.get(doc.type) ?? true}
-                onUpload={(file) => uploadTenant.mutate({ docId: doc.id, file }, { onSuccess: () => refetch() })}
+                isUploading={uploadTenant.isPending && uploadTenant.variables?.docId === doc.id}
+                uploadError={
+                  uploadTenant.isError && uploadTenant.variables?.docId === doc.id
+                    ? uploadTenant.error instanceof Error
+                      ? uploadTenant.error.message
+                      : "Échec de l’envoi"
+                    : null
+                }
+                uploadDisabled={uploadBusy}
+                onUpload={(file) =>
+                  uploadTenant.mutate(
+                    { docId: doc.id, file },
+                    {
+                      onSuccess: () => {
+                        void refetch();
+                        setUploadOkFlash(true);
+                        window.setTimeout(() => setUploadOkFlash(false), 2800);
+                      },
+                    },
+                  )
+                }
                 onApprove={() => patchTenant.mutate({ docId: doc.id, status: "approved" }, { onSuccess: () => refetch() })}
                 onReject={() => patchTenant.mutate({ docId: doc.id, status: "rejected" }, { onSuccess: () => refetch() })}
                 canReview={admin}
@@ -159,8 +204,32 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
                         key={doc.id}
                         doc={doc}
                         required={true}
+                        isUploading={
+                          uploadGuarantor.isPending &&
+                          uploadGuarantor.variables?.docId === doc.id &&
+                          uploadGuarantor.variables?.guarantorId === g.id
+                        }
+                        uploadError={
+                          uploadGuarantor.isError &&
+                          uploadGuarantor.variables?.docId === doc.id &&
+                          uploadGuarantor.variables?.guarantorId === g.id
+                            ? uploadGuarantor.error instanceof Error
+                              ? uploadGuarantor.error.message
+                              : "Échec de l’envoi"
+                            : null
+                        }
+                        uploadDisabled={uploadBusy}
                         onUpload={(file) =>
-                          uploadGuarantor.mutate({ guarantorId: g.id, docId: doc.id, file }, { onSuccess: () => refetch() })
+                          uploadGuarantor.mutate(
+                            { guarantorId: g.id, docId: doc.id, file },
+                            {
+                              onSuccess: () => {
+                                void refetch();
+                                setUploadOkFlash(true);
+                                window.setTimeout(() => setUploadOkFlash(false), 2800);
+                              },
+                            },
+                          )
                         }
                         onApprove={() =>
                           patchGuarantor.mutate({ guarantorId: g.id, docId: doc.id, status: "approved" }, { onSuccess: () => refetch() })
@@ -223,19 +292,40 @@ export function MobileDossierDetail({ dossierId, user }: { dossierId: string; us
       <div className="fixed bottom-16 left-0 right-0 z-30">
         <div className="mx-auto max-w-md px-4">
           <div className="rounded-3xl bg-white p-3 shadow-lg ring-1 ring-gray-200">
-            <label className="flex h-12 cursor-pointer items-center justify-center rounded-2xl bg-[#2563EB] text-sm font-semibold text-white">
-              Ajouter un document
+            <label
+              className={`flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-2xl px-3 py-2 text-center text-sm font-semibold text-white ${
+                uploadBusy || !tenantUploadSlot ? "bg-blue-300" : "bg-[#2563EB]"
+              }`}
+            >
+              {uploadBusy ? "Upload en cours…" : tenantUploadSlot ? "Ajouter un document" : "Locataire : rien à envoyer"}
+              {!tenantUploadSlot && !uploadBusy ? (
+                <span className="mt-1 text-[11px] font-normal opacity-90">Utilisez « Remplacer » sur une pièce ou complétez le garant.</span>
+              ) : null}
               <input
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                 className="hidden"
+                disabled={uploadBusy || !tenantUploadSlot}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (!f) return;
-                  const firstMissing = dossier.documents.find((d) => d.status === "missing");
-                  if (firstMissing) {
-                    uploadTenant.mutate({ docId: firstMissing.id, file: f }, { onSuccess: () => refetch() });
-                  }
+                  const input = e.target;
+                  const slot = firstDocSlotForUpload(dossier.documents);
+                  if (f && slot) {
+                    uploadTenant.mutate(
+                      { docId: slot.id, file: f },
+                      {
+                        onSuccess: () => {
+                          void refetch();
+                          setUploadOkFlash(true);
+                          window.setTimeout(() => setUploadOkFlash(false), 2800);
+                          input.value = "";
+                        },
+                        onError: () => {
+                          input.value = "";
+                        },
+                      },
+                    );
+                  } else input.value = "";
                 }}
               />
             </label>
@@ -299,6 +389,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function DocCard({
   doc,
   required,
+  isUploading,
+  uploadError,
+  uploadDisabled,
   onUpload,
   onApprove,
   onReject,
@@ -306,6 +399,9 @@ function DocCard({
 }: {
   doc: DossierDocument;
   required: boolean;
+  isUploading: boolean;
+  uploadError: string | null;
+  uploadDisabled: boolean;
   onUpload: (file: File) => void;
   onApprove: () => void;
   onReject: () => void;
@@ -325,19 +421,34 @@ function DocCard({
             </span>
           </div>
         </div>
-        <label className="shrink-0 cursor-pointer rounded-2xl bg-[#2563EB] px-3 py-2 text-xs font-semibold text-white">
-          {doc.fileUrl ? "Remplacer" : "Ajouter"}
+        <label
+          className={`shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold text-white ${
+            isUploading
+              ? "cursor-wait bg-blue-400"
+              : uploadDisabled
+                ? "cursor-not-allowed bg-gray-400"
+                : "cursor-pointer bg-[#2563EB]"
+          }`}
+        >
+          {isUploading ? "Envoi…" : doc.fileUrl ? "Remplacer" : "Ajouter"}
           <input
             type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
             className="hidden"
+            disabled={uploadDisabled}
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) onUpload(f);
+              const input = e.target;
+              if (f) {
+                onUpload(f);
+                input.value = "";
+              } else input.value = "";
             }}
           />
         </label>
       </div>
+
+      {uploadError ? <div className="mt-2 text-[11px] font-medium text-[#DC2626]">{uploadError}</div> : null}
 
       {doc.fileName && (
         <div className="mt-2 truncate text-[11px] text-gray-500" title={doc.fileName}>

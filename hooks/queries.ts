@@ -141,9 +141,9 @@ export function useUploadTenantDoc(dossierId: string) {
       fd.set("file", file);
       return apiFetch(`/api/dossiers/${dossierId}/documents/${docId}`, { method: "POST", body: fd });
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.dossier(dossierId) });
-      qc.invalidateQueries({ queryKey: ["dossiers"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: qk.dossier(dossierId) });
+      await qc.invalidateQueries({ queryKey: ["dossiers"] });
     },
   });
 }
@@ -164,9 +164,9 @@ export function useUploadGuarantorDoc(dossierId: string) {
       fd.set("file", file);
       return apiFetch(`/api/guarantors/${guarantorId}/documents/${docId}`, { method: "POST", body: fd });
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: qk.dossier(dossierId) });
-      qc.invalidateQueries({ queryKey: ["dossiers"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: qk.dossier(dossierId) });
+      await qc.invalidateQueries({ queryKey: ["dossiers"] });
     },
   });
 }
