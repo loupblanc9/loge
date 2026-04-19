@@ -37,7 +37,7 @@ export function Sidebar({ user }: { user: SessionUser }) {
                 key={item.href}
                 href={item.href}
                 className={cx(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-out",
                   active ? "bg-[#2563EB] text-white shadow-sm" : "text-slate-300 hover:bg-white/5 hover:text-white",
                 )}
               >

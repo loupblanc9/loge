@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import type { SessionUser } from "@/types/api";
@@ -45,12 +46,19 @@ export function UserMenu({ user }: { user: SessionUser }) {
               {user.role === "admin" ? "Administrateur" : "Locataire"}
             </p>
           </div>
+          <Link
+            href="/"
+            className="block px-3 py-2 text-sm text-[#374151] hover:bg-gray-50"
+            onClick={() => setOpen(false)}
+          >
+            Accueil public
+          </Link>
           <button
             type="button"
             className="block w-full px-3 py-2 text-left text-sm text-[#DC2626] hover:bg-gray-50"
             onClick={() => {
               logout.mutate(undefined, {
-                onSuccess: () => router.push("/login"),
+                onSuccess: () => router.push("/"),
               });
             }}
           >

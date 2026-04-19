@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Spinner } from "@/components/brand/Spinner";
 import { useCreateDossier } from "@/hooks/queries";
 import { PRIVATE_DOCUMENT_TYPES, SOCIAL_DOCUMENT_TYPES } from "@/lib/constants/document-types";
 
@@ -127,7 +128,14 @@ export function MobileOnboardingCreateDossier() {
               )
             }
           >
-            {create.isPending ? "Création…" : "Démarrer"}
+            {create.isPending ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Spinner className="h-4 w-4 text-white" />
+                Création en cours…
+              </span>
+            ) : (
+              "Démarrer"
+            )}
           </button>
         </div>
       )}

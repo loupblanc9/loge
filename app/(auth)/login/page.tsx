@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { apiFetch, ApiError } from "@/lib/api/client";
+import { Spinner } from "@/components/brand/Spinner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,50 +30,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-      <div className="mb-6 flex items-center gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563EB] text-lg font-bold text-white">D</span>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, delay: 0.08 }}
+      className="domicial-auth-card"
+    >
+      <div className="mb-6 flex items-center gap-3">
+        <span
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold text-white shadow-md"
+          style={{ background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" }}
+        >
+          D
+        </span>
         <div>
           <h1 className="text-lg font-semibold text-[#111827]">Domicial</h1>
-          <p className="text-sm text-[#374151]">Connexion</p>
+          <p className="text-sm text-[#374151]">Connexion à votre espace</p>
         </div>
       </div>
       <form onSubmit={onSubmit} className="space-y-4">
-        {err && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-[#DC2626]">{err}</p>}
+        {err && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-[#DC2626]">{err}</p>}
         <div>
-          <label className="text-xs font-medium text-gray-600">Email</label>
+          <label className="domicial-field-label">Email</label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#2563EB]"
+            className="domicial-field-input"
+            autoComplete="email"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600">Mot de passe</label>
+          <label className="domicial-field-label">Mot de passe</label>
           <input
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#2563EB]"
+            className="domicial-field-input"
+            autoComplete="current-password"
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-[#2563EB] py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
-        >
-          {loading ? "Connexion…" : "Se connecter"}
+        <button type="submit" disabled={loading} className="domicial-btn-primary">
+          {loading ? (
+            <>
+              <Spinner className="h-4 w-4 text-white" />
+              Connexion en cours…
+            </>
+          ) : (
+            "Se connecter"
+          )}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm text-[#374151]">
+      <p className="mt-5 text-center text-sm text-[#374151]">
         Pas de compte ?{" "}
-        <Link href="/register" className="font-medium text-[#2563EB] hover:underline">
+        <Link href="/register" className="font-semibold text-[#2563EB] transition hover:text-[#1d4ed8] hover:underline">
           Créer un compte
         </Link>
       </p>
-    </div>
+      <p className="mt-4 text-center">
+        <Link href="/" className="text-xs font-medium text-[#6b7280] transition hover:text-[#2563EB]">
+          ← Retour à l’accueil
+        </Link>
+      </p>
+    </motion.div>
   );
 }

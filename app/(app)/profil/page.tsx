@@ -22,7 +22,7 @@ export default function ProfilPage() {
           type="button"
           onClick={() =>
             logout.mutate(undefined, {
-              onSuccess: () => router.push("/login"),
+              onSuccess: () => router.push("/"),
             })
           }
           className="mt-5 h-11 w-full rounded-2xl bg-[#111827] text-sm font-semibold text-white"

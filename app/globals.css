@@ -6,10 +6,17 @@
   --text: #111827;
   --text-muted: #374151;
   --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-glow: rgba(37, 99, 235, 0.28);
   --ok: #16a34a;
   --danger: #dc2626;
   --warn: #f59e0b;
   --missing: #9ca3af;
+  --radius-brand: 0.75rem;
+  --radius-brand-lg: 1rem;
+  --shadow-brand: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-brand-lg: 0 24px 48px rgba(15, 23, 42, 0.12);
 }
 
 @theme inline {
@@ -32,5 +39,44 @@ body {
     --card: #ffffff;
     --text: #111827;
     --text-muted: #374151;
+  }
+}
+
+@layer components {
+  .domicial-field-label {
+    @apply text-xs font-medium text-[#374151];
+  }
+  .domicial-field-input {
+    @apply mt-1 w-full rounded-xl border border-gray-200/90 bg-white px-3 py-2.5 text-sm text-[#111827] shadow-sm outline-none transition;
+    @apply focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20;
+  }
+  .domicial-btn-primary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition;
+    @apply hover:bg-[#1d4ed8] active:scale-[0.99] disabled:pointer-events-none disabled:opacity-55;
+  }
+  .domicial-auth-card {
+    @apply w-full rounded-2xl border border-gray-200/80 bg-white/95 p-8 shadow-[var(--shadow-brand-lg)] backdrop-blur-sm;
+  }
+}
+
+@keyframes domicial-mockup-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes domicial-cta-glow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1.05);
   }
 }
