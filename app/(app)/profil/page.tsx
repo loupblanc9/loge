@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useMe, useLogout } from "@/hooks/queries";
 
 export default function ProfilPage() {
@@ -10,6 +11,7 @@ export default function ProfilPage() {
 
   return (
     <div className="mx-auto max-w-md">
+      <BrandLogo href="/dashboard" variant="full" size="sm" theme="light" className="mb-4" />
       <h1 className="mb-3 text-base font-semibold text-[#111827]">Profil</h1>
       <div className="rounded-3xl bg-white p-5 ring-1 ring-gray-200">
         <div className="text-sm font-semibold text-[#111827]">{user?.name ?? "—"}</div>

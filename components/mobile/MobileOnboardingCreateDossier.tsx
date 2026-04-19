@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Spinner } from "@/components/brand/Spinner";
 import { useCreateDossier } from "@/hooks/queries";
 import { PRIVATE_DOCUMENT_TYPES, SOCIAL_DOCUMENT_TYPES } from "@/lib/constants/document-types";
@@ -22,6 +23,7 @@ export function MobileOnboardingCreateDossier() {
 
   return (
     <div className="mx-auto max-w-md">
+      <BrandLogo href="/dashboard" variant="full" size="sm" theme="light" className="mb-4" />
       <div className="mb-4">
         <h1 className="text-base font-semibold text-[#111827]">Créer un dossier</h1>
         <p className="mt-1 text-xs text-[#374151]">Parcours guidé, étape par étape.</p>

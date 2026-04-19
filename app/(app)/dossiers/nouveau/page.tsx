@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCreateDossier } from "@/hooks/queries";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { MobileOnboardingCreateDossier } from "@/components/mobile/MobileOnboardingCreateDossier";
 
 export default function NouveauDossierPage() {
@@ -19,6 +20,7 @@ export default function NouveauDossierPage() {
 
       {/* Desktop (inchangé) */}
       <div className="mx-auto hidden max-w-lg rounded-xl border border-gray-200 bg-white p-8 shadow-sm md:block">
+        <BrandLogo href="/dashboard" variant="full" size="md" theme="light" className="mb-5" />
         <h1 className="text-xl font-semibold text-[#111827]">Créer un dossier</h1>
         <p className="mt-1 text-sm text-[#374151]">Un numéro DOSSIER-XXXX sera attribué automatiquement.</p>
         <form

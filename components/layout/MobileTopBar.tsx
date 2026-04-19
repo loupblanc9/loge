@@ -7,6 +7,7 @@ import type { FilterState } from "@/types/filters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchQuery } from "@/hooks/queries";
 import { MobileFiltersSheet } from "@/components/mobile/MobileFiltersSheet";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export function MobileTopBar({
   user,
@@ -31,11 +32,8 @@ export function MobileTopBar({
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-md px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2563EB] text-sm font-bold text-white">
-            D
-          </div>
+          <BrandLogo href="/dashboard" variant="full" size="sm" theme="light" className="min-w-0 shrink-0" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-[#111827]">Domicial</div>
             <div className="text-[11px] text-[#374151]">Bonjour, {user.name.split(" ")[0] ?? user.name}</div>
           </div>
           {showFilters && (

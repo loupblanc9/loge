@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   motion,
   useMotionValueEvent,
@@ -95,16 +96,7 @@ export function LandingPage() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-6 px-6">
-          <Link href="/" className="flex items-center gap-2.5 font-bold tracking-[0.12em] text-[#0f1419]">
-            <span
-              className="h-7 w-7 rounded-lg shadow-sm"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
-              }}
-              aria-hidden
-            />
-            <span className="text-[15px]">DOMICIAL</span>
-          </Link>
+          <BrandLogo href="/" variant="full" size="md" theme="light" />
 
           <nav
             className={`absolute left-0 right-0 top-16 flex flex-col gap-0 border-b border-[#0f1419]/6 bg-[#fafbfc]/98 px-6 py-4 backdrop-blur-md md:static md:flex md:flex-row md:items-center md:gap-7 md:border-0 md:bg-transparent md:p-0 ${
@@ -265,10 +257,10 @@ export function LandingPage() {
                   </span>
                 </div>
                 <div className="grid min-h-[280px] grid-cols-[minmax(0,120px)_1fr] md:min-h-[320px]">
-                  <aside className="border-r border-gray-100 bg-[#f8fafc] p-3 text-[11px] font-bold tracking-wide text-[#2563EB]">
-                    DOMICIAL
-                    <div className="mt-4 space-y-1 font-semibold">
-                      <div className="rounded-lg bg-white px-2 py-2 text-[#111827] shadow-sm">Mon dossier</div>
+                  <aside className="border-r border-gray-100 bg-[#f8fafc] p-3">
+                    <BrandLogo variant="full" size="xs" theme="light" className="scale-90" />
+                    <div className="mt-4 space-y-1 text-[11px] font-semibold text-[#111827]">
+                      <div className="rounded-lg bg-white px-2 py-2 shadow-sm">Mon dossier</div>
                       <div className="px-2 py-2 text-[#64748b]">Documents</div>
                       <div className="px-2 py-2 text-[#64748b]">Suivi</div>
                     </div>
@@ -599,8 +591,8 @@ export function LandingPage() {
       </nav>
 
       <footer className="border-t border-[#0f1419]/6 bg-[#fafbfc] pb-24 pt-8 md:pb-8">
-        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-6">
-          <span className="text-[13px] font-bold tracking-[0.12em] text-[#5c6570]">DOMICIAL</span>
+        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-4 px-6">
+          <BrandLogo href="/" variant="full" size="sm" theme="muted" />
           <span className="text-[13px] text-[#9aa3ad]">© {year} Domicial. Tous droits réservés.</span>
         </div>
       </footer>

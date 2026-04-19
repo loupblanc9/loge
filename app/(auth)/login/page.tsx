@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { apiFetch, ApiError } from "@/lib/api/client";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Spinner } from "@/components/brand/Spinner";
 
 export default function LoginPage() {
@@ -36,17 +37,10 @@ export default function LoginPage() {
       transition={{ duration: 0.35, delay: 0.08 }}
       className="domicial-auth-card"
     >
-      <div className="mb-6 flex items-center gap-3">
-        <span
-          className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold text-white shadow-md"
-          style={{ background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" }}
-        >
-          D
-        </span>
-        <div>
-          <h1 className="text-lg font-semibold text-[#111827]">Domicial</h1>
-          <p className="text-sm text-[#374151]">Connexion à votre espace</p>
-        </div>
+      <div className="mb-6">
+        <BrandLogo href="/" variant="full" size="lg" theme="light" className="mb-4" />
+        <h1 className="text-lg font-semibold text-[#111827]">Connexion</h1>
+        <p className="text-sm text-[#374151]">Accédez à votre espace Domicial</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-4">
         {err && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-[#DC2626]">{err}</p>}

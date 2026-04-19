@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SessionUser } from "@/types/api";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const nav = [
   { href: "/dashboard", label: "Tableau de bord", icon: "▦" },
@@ -22,9 +23,8 @@ export function Sidebar({ user }: { user: SessionUser }) {
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-slate-800/80 bg-[#0f172a] text-white">
-      <div className="flex h-14 items-center gap-2 border-b border-white/10 px-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] text-sm font-bold">D</span>
-        <span className="text-sm font-semibold tracking-tight">Domicial</span>
+      <div className="flex h-14 items-center border-b border-white/10 px-3">
+        <BrandLogo href="/dashboard" variant="full" size="sm" theme="dark" className="min-w-0 max-w-full" />
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
         {nav

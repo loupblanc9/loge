@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { SessionUser } from "@/types/api";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { UserMenu } from "./UserMenu";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSearchQuery } from "@/hooks/queries";
@@ -42,7 +43,8 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
       <div className="flex h-14 flex-wrap items-center gap-4 px-6 py-2">
-        <div className="relative min-w-0 flex-1 max-w-3xl">
+        <BrandLogo href="/dashboard" variant="mark" size="sm" theme="light" className="hidden shrink-0 sm:inline-flex" />
+        <div className="relative min-w-0 max-w-3xl flex-1">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
           <input
             type="search"
