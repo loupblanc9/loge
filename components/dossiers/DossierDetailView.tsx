@@ -24,6 +24,7 @@ import { formatDateTimeFr } from "@/lib/format";
 import { canUploadDocumentStatus, firstDocSlotForUpload } from "@/lib/upload-slot";
 import { TagBadges } from "./TagBadges";
 import { TagPickerModal } from "./TagPickerModal";
+import { DocumentFileActions } from "./DocumentFileActions";
 
 function DocThumb({ url, name }: { url: string | null; name: string | null }) {
   if (!url) return <div className="h-12 w-16 shrink-0 rounded border border-dashed border-gray-200 bg-gray-50" />;
@@ -95,14 +96,35 @@ export function DossierDetailView({
               Client : <span className="font-medium text-[#111827]">{dossier.user.name}</span>
             </p>
             {admin ? (
-              <p className="mt-1 text-xs text-gray-500">
-                {dossier.user.email} · créé le {formatDateTimeFr(dossier.createdAt)}
-                {dossier.dossierType ? (
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
-                    {dossier.dossierType === "social" ? "Dossier social" : "Dossier privé"}
-                  </span>
-                ) : null}
-              </p>
+              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                <p>
+                  <span className="font-medium text-gray-700">Email :</span> {dossier.user.email}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-700">Téléphone :</span>{" "}
+                  {dossier.user.phone?.trim() ? (
+                    <a href={`tel:${dossier.user.phone.replace(/\s/g, "")}`} className="text-[#2563EB] hover:underline">
+                      {dossier.user.phone}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">Non renseigné</span>
+                  )}
+                </p>
+                <p>
+                  <span className="font-medium text-gray-700">Inscription :</span>{" "}
+                  {formatDateTimeFr(dossier.user.memberSince)}
+                  {" · "}
+                  <span className="font-medium text-gray-700">Dossiers :</span> {dossier.user.dossierCount}
+                </p>
+                <p className="text-gray-500">
+                  Création de ce dossier : {formatDateTimeFr(dossier.createdAt)}
+                  {dossier.dossierType ? (
+                    <span className="ml-2 inline-block rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                      {dossier.dossierType === "social" ? "Social" : "Privé"}
+                    </span>
+                  ) : null}
+                </p>
+              </div>
             ) : null}
             {dossier.title ? <p className="mt-1 text-sm text-[#374151]">{dossier.title}</p> : null}
           </div>
@@ -360,6 +382,7 @@ function DocumentListSection({
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <DocumentFileActions doc={d} />
                 {canUpload && canUploadDocumentStatus(d.status) && (
                   <label
                     className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
@@ -490,6 +513,7 @@ function GuarantorBlock({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <DocumentFileActions doc={d} />
               {canUpload && canUploadDocumentStatus(d.status) && (
                 <label
                   className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${

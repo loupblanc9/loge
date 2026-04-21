@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, buildDossiersQuery } from "@/lib/api/client";
 import type {
+  AdminClientListItem,
   DossierDetail,
   DossiersListResponse,
   DossierListItem,
@@ -17,6 +18,8 @@ export const qk = {
   dossier: (id: string) => ["dossier", id] as const,
   tags: ["tags"] as const,
   search: (q: string) => ["search", q] as const,
+  adminClients: (qs: string) => ["admin-clients", qs] as const,
+  adminClient: (id: string) => ["admin-client", id] as const,
 };
 
 export function useMe() {
@@ -233,7 +236,56 @@ export function useDeleteDossier() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiFetch(`/api/dossiers/${id}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dossiers"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dossiers"] });
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["admin-client"] });
+    },
+  });
+}
+
+export function useAdminClientsList(apiQueryString: string) {
+  return useQuery({
+    queryKey: qk.adminClients(apiQueryString),
+    queryFn: () =>
+      apiFetch<{ data: AdminClientListItem[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(
+        `/api/admin/clients${apiQueryString ? `?${apiQueryString}` : ""}`,
+      ),
+  });
+}
+
+export function useAdminClientDetail(userId: string | null) {
+  return useQuery({
+    queryKey: qk.adminClient(userId ?? ""),
+    queryFn: () =>
+      apiFetch<{
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          phone: string | null;
+          createdAt: string;
+          dossierCount: number;
+        };
+        dossiers: import("@/types/api").DossierDetail[];
+      }>(`/api/admin/clients/${userId!}`),
+    enabled: !!userId,
+  });
+}
+
+export function usePatchAdminClient(userId: string | null | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name?: string; phone?: string | null }) => {
+      if (!userId) return Promise.reject(new Error("Identifiant client manquant"));
+      return apiFetch(`/api/admin/clients/${userId}`, { method: "PATCH", json: body });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-client"] });
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["dossier"] });
+      qc.invalidateQueries({ queryKey: ["dossiers"] });
+    },
   });
 }
 

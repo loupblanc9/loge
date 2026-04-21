@@ -292,7 +292,17 @@ export async function getDossierById(id: string, opts: { userId?: string; admin:
   const dossier = await prisma.dossier.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, email: true, name: true, avatarUrl: true } },
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          avatarUrl: true,
+          createdAt: true,
+          _count: { select: { dossiers: true } },
+        },
+      },
       documents: true,
       guarantors: { include: { documents: true } },
       dossierTags: { include: { tag: true } },

@@ -6,6 +6,7 @@ export type SessionUser = {
   name: string;
   role: UserRole;
   avatarUrl: string | null;
+  phone: string | null;
 };
 
 export type DossierStatus = "pending" | "incomplete" | "in_review" | "validated" | "rejected";
@@ -27,6 +28,7 @@ export type DossierListItem = {
     id: string;
     email: string;
     name: string;
+    phone?: string | null;
     avatarUrl: string | null;
   };
   tags: { id: string; name: string; color: string }[];
@@ -42,6 +44,17 @@ export type DossierListItem = {
 export type DossiersListResponse = {
   data: DossierListItem[];
   meta: { total: number; page: number; limit: number; totalPages: number };
+};
+
+/** Ligne liste admin /clients */
+export type AdminClientListItem = {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  createdAt: string;
+  dossierCount: number;
+  lastDossierStatus: DossierStatus | null;
 };
 
 export type Tag = {
@@ -94,7 +107,17 @@ export type DossierDetail = {
   openedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  user: { id: string; email: string; name: string; avatarUrl: string | null };
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    phone: string | null;
+    avatarUrl: string | null;
+    /** Nombre total de dossiers du compte client */
+    dossierCount: number;
+    /** Date d’inscription du compte */
+    memberSince: string;
+  };
   documents: DossierDocument[];
   guarantors: GuarantorWithDocs[];
   dossierTags: { id: string; tagId: string; dossierId: string; tag: Tag }[];

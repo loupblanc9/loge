@@ -9,6 +9,12 @@ export default async function AdminHubPage() {
 
   const cards = [
     {
+      href: "/admin/clients",
+      title: "Clients",
+      desc: "Annuaire des comptes locataires, fiche détail, dossiers et pièces.",
+      icon: "👤",
+    },
+    {
       href: "/dossiers/tous",
       title: "Liste des dossiers",
       desc: "Table complète, filtres, actions groupées et tri.",

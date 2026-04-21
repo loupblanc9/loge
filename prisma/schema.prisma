@@ -57,6 +57,8 @@ model User {
   password  String
   /// Nom affiché (locataire / candidat) — maquette « Nom client »
   name      String
+  /// Téléphone (contact par l’équipe) — optionnel à l’inscription
+  phone     String?
   avatarUrl String?
   role      Role     @default(client)
   createdAt DateTime @default(now())

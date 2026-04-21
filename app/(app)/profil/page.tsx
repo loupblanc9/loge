@@ -16,6 +16,7 @@ export default function ProfilPage() {
       <div className="rounded-3xl bg-white p-5 ring-1 ring-gray-200">
         <div className="text-sm font-semibold text-[#111827]">{user?.name ?? "—"}</div>
         <div className="mt-1 text-xs text-[#374151]">{user?.email ?? ""}</div>
+        {user?.phone ? <div className="mt-1 text-xs text-[#374151]">{user.phone}</div> : null}
         <div className="mt-3 text-[11px] font-medium uppercase tracking-wide text-[#2563EB]">
           {user?.role === "admin" ? "Administrateur" : "Locataire"}
         </div>

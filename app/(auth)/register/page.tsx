@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,10 @@ export default function RegisterPage() {
     setErr(null);
     setLoading(true);
     try {
-      await apiFetch("/api/auth/register", { method: "POST", json: { name, email, password } });
+      await apiFetch("/api/auth/register", {
+        method: "POST",
+        json: { name, email, password, ...(phone.trim() ? { phone: phone.trim() } : {}) },
+      });
       router.push("/dashboard");
       router.refresh();
     } catch (e) {
@@ -64,6 +68,17 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="domicial-field-input"
             autoComplete="email"
+          />
+        </div>
+        <div>
+          <label className="domicial-field-label">Téléphone (optionnel)</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="domicial-field-input"
+            autoComplete="tel"
+            placeholder="06 12 34 56 78"
           />
         </div>
         <div>

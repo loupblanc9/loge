@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 const nav = [
   { href: "/dashboard", label: "Tableau de bord", icon: "▦" },
   { href: "/admin", label: "Back-office", icon: "◆", adminOnly: true },
+  { href: "/admin/clients", label: "Clients", icon: "👤", adminOnly: true },
   { href: "/dossiers/tous", label: "Tous les dossiers", icon: "▣", adminOnly: true },
   { href: "/dossiers/mes", label: "Mes dossiers", icon: "◎" },
   { href: "/dossiers/vue", label: "Vue traitement", icon: "⧉", adminOnly: true },
@@ -16,6 +17,14 @@ const nav = [
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
+}
+
+function isNavActive(pathname: string, href: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/clients") return pathname.startsWith("/admin/clients");
+  if (pathname === href) return true;
+  if (href === "/dashboard") return false;
+  return pathname.startsWith(href);
 }
 
 export function Sidebar({ user }: { user: SessionUser }) {
@@ -31,10 +40,7 @@ export function Sidebar({ user }: { user: SessionUser }) {
         {nav
           .filter((n) => !("adminOnly" in n && n.adminOnly && !isAdmin))
           .map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && item.href !== "/admin" && pathname.startsWith(item.href)) ||
-              (item.href === "/admin" && pathname.startsWith("/admin"));
+            const active = isNavActive(pathname, item.href);
             return (
               <Link
                 key={item.href}

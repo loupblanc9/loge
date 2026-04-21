@@ -3,7 +3,7 @@ import { verifyToken } from "@/lib/auth/jwt";
 import { getAuthCookie } from "@/lib/auth/cookies";
 import { prisma } from "@/lib/prisma";
 
-export type SessionUser = Pick<User, "id" | "email" | "name" | "role" | "avatarUrl">;
+export type SessionUser = Pick<User, "id" | "email" | "name" | "role" | "avatarUrl" | "phone">;
 
 export async function getSession(): Promise<SessionUser | null> {
   const token = await getAuthCookie();
@@ -12,7 +12,7 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!payload) return null;
   const user = await prisma.user.findUnique({
     where: { id: payload.sub },
-    select: { id: true, email: true, name: true, role: true, avatarUrl: true },
+    select: { id: true, email: true, name: true, role: true, avatarUrl: true, phone: true },
   });
   return user;
 }

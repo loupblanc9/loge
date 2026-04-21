@@ -12,6 +12,7 @@ const bodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1),
+  phone: z.string().max(40).optional(),
 });
 
 export async function POST(req: Request) {
@@ -29,7 +30,9 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return jsonError("Données invalides", 400, { details: parsed.error.flatten() });
     }
-    const { email, password, name } = parsed.data;
+    const { email, password, name, phone: phoneRaw } = parsed.data;
+    const phone =
+      phoneRaw != null && String(phoneRaw).trim() !== "" ? String(phoneRaw).trim().slice(0, 40) : null;
 
     const exists = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (exists) {
@@ -41,9 +44,10 @@ export async function POST(req: Request) {
         email: email.toLowerCase(),
         password: await hashPassword(password),
         name,
+        phone,
         role: "client",
       },
-      select: { id: true, email: true, name: true, role: true, avatarUrl: true },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, phone: true },
     });
 
     const token = await signToken({

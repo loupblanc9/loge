@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         name: user.name,
         role: user.role,
         avatarUrl: user.avatarUrl,
+        phone: user.phone ?? null,
       },
     });
   } catch (e) {

@@ -16,9 +16,20 @@ export async function GET(_req: Request, ctx: Ctx) {
     const dossier = await getDossierById(id, { admin: isAdmin(user.role), userId: user.id });
     if (!dossier) return jsonError("Dossier introuvable", 404);
     const missing = await buildMissingSummary(id);
+    const { user: u, ...rest } = dossier;
+    const uc = u as typeof u & { _count: { dossiers: number } };
     return NextResponse.json({
       dossier: {
-        ...dossier,
+        ...rest,
+        user: {
+          id: uc.id,
+          email: uc.email,
+          name: uc.name,
+          phone: uc.phone ?? null,
+          avatarUrl: uc.avatarUrl,
+          dossierCount: uc._count.dossiers,
+          memberSince: uc.createdAt.toISOString(),
+        },
         missingSummary: missing.summary,
         missingCount: missing.missingCount,
         missingLabels: missing.missingLabels,

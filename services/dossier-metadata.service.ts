@@ -108,7 +108,7 @@ export async function buildMissingSummary(dossierId: string): Promise<{
 }
 
 export const dossierListInclude = {
-  user: { select: { id: true, email: true, name: true, avatarUrl: true } },
+  user: { select: { id: true, email: true, name: true, phone: true, avatarUrl: true } },
   dossierTags: { include: { tag: true } },
   documents: { select: { id: true, type: true, status: true } },
   guarantors: { include: { documents: { select: { id: true, status: true } } } },
