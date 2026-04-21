@@ -24,7 +24,10 @@ export default function DossiersTousPage() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold text-[#111827]">Tous les dossiers</h1>
-          <p className="text-sm text-[#374151]">Action hover : Valider / Refuser sur une ligne</p>
+          <p className="text-sm text-[#374151]">
+            Filtres dans la barre supérieure · survol d’une ligne : raccourcis valider / refuser · sélection multiple : actions
+            groupées
+          </p>
         </div>
       </div>
       <DossierTable admin />

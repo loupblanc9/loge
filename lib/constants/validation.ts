@@ -8,3 +8,8 @@ export const zHexColor = z
 
 export const zDocumentStatus = z.enum(["missing", "uploaded", "approved", "rejected"]);
 
+/** Corps JSON PATCH pour mettre à jour le statut d’un document (locataire ou garant). */
+export const zDocumentStatusPatchBody = z.object({
+  status: zDocumentStatus,
+});
+

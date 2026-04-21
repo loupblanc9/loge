@@ -17,9 +17,15 @@ enum Role {
 }
 
 enum DossierStatus {
+  /// File d’attente / pas encore traité par l’équipe (souvent défini manuellement)
+  pending
   incomplete
-  review
-  complete
+  /// Documents envoyés, équipe en cours de contrôle
+  in_review
+  /// Dossier accepté côté métier
+  validated
+  /// Dossier refusé
+  rejected
 }
 
 enum DossierType {

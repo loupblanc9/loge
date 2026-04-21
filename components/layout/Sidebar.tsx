@@ -7,9 +7,10 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const nav = [
   { href: "/dashboard", label: "Tableau de bord", icon: "▦" },
+  { href: "/admin", label: "Back-office", icon: "◆", adminOnly: true },
   { href: "/dossiers/tous", label: "Tous les dossiers", icon: "▣", adminOnly: true },
   { href: "/dossiers/mes", label: "Mes dossiers", icon: "◎" },
-  { href: "/dossiers/vue", label: "Vue fractionnée", icon: "⧉" },
+  { href: "/dossiers/vue", label: "Vue traitement", icon: "⧉", adminOnly: true },
   { href: "/dossiers/nouveau", label: "Créer un dossier", icon: "+" },
 ];
 
@@ -31,7 +32,9 @@ export function Sidebar({ user }: { user: SessionUser }) {
           .filter((n) => !("adminOnly" in n && n.adminOnly && !isAdmin))
           .map((item) => {
             const active =
-              pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              pathname === item.href ||
+              (item.href !== "/dashboard" && item.href !== "/admin" && pathname.startsWith(item.href)) ||
+              (item.href === "/admin" && pathname.startsWith("/admin"));
             return (
               <Link
                 key={item.href}
@@ -53,11 +56,11 @@ export function Sidebar({ user }: { user: SessionUser }) {
             href="/admin/tags"
             className={cx(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white",
-              pathname.startsWith("/admin") && "bg-white/10 text-white",
+              pathname.startsWith("/admin/tags") && "bg-white/10 text-white",
             )}
           >
-            <span className="w-5 text-center">⚙</span>
-            Gestion (admin)
+            <span className="w-5 text-center">🏷</span>
+            Tags
           </Link>
         </div>
       )}

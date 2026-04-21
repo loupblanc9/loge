@@ -23,9 +23,9 @@ function aggregateDocStates(docs: DocLike[]): {
 
 function computeDossierStatus(states: ReturnType<typeof aggregateDocStates>): DossierStatus {
   if (states.missing > 0) return "incomplete";
-  if (states.pendingUpload > 0) return "review";
+  if (states.pendingUpload > 0) return "in_review";
   if (states.total === 0) return "incomplete";
-  return "complete";
+  return "validated";
 }
 
 function computeProgress(states: ReturnType<typeof aggregateDocStates>): number {
@@ -51,11 +51,20 @@ export async function recalculateDossier(dossierId: string): Promise<void> {
 
   const states = aggregateDocStates(all);
   const progress = computeProgress(states);
-  const status = computeDossierStatus(states);
+  const computed = computeDossierStatus(states);
+
+  /** Refus et « en attente » métier : on ne réécrit pas le statut automatiquement (seulement la progression). */
+  if (dossier.status === "rejected" || dossier.status === "pending") {
+    await prisma.dossier.update({
+      where: { id: dossierId },
+      data: { progress },
+    });
+    return;
+  }
 
   await prisma.dossier.update({
     where: { id: dossierId },
-    data: { progress, status },
+    data: { progress, status: computed },
   });
 }
 
@@ -138,5 +147,6 @@ export function serializeDossierForTable(row: DossierListRow) {
       ratioLabel: total ? `${approved}/${total} documents` : "0/0 documents",
       hasMissing: missing > 0,
     },
+    dossierType: row.dossierType,
   };
 }

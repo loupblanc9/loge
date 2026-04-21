@@ -10,9 +10,11 @@ function Fallback() {
 export default async function DossiersVuePage() {
   const user = await getSession();
   if (!user) redirect("/login");
+  if (user.role !== "admin") redirect("/dashboard");
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-[#111827]">Vue fractionnée</h1>
+      <h1 className="mb-4 text-xl font-semibold text-[#111827]">Vue traitement</h1>
+      <p className="mb-4 text-sm text-[#374151]">Sélectionnez un dossier à gauche, traitez les pièces et le statut à droite.</p>
       <Suspense fallback={<Fallback />}>
         <SplitDossierView user={user} />
       </Suspense>

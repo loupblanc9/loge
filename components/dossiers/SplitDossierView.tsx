@@ -8,6 +8,12 @@ import { toApiListParams } from "@/lib/filter-url";
 import { dossierStatusUi } from "@/lib/dossier-status-ui";
 import { DossierDetailView } from "./DossierDetailView";
 
+function typeLabel(dt: import("@/types/api").DossierListItem["dossierType"]) {
+  if (dt === "social") return "Social";
+  if (dt === "prive") return "Privé";
+  return "";
+}
+
 export function SplitDossierView({ user }: { user: SessionUser }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,6 +79,9 @@ export function SplitDossierView({ user }: { user: SessionUser }) {
                       {st.label}
                     </span>
                   </div>
+                  {typeLabel(d.dossierType) ? (
+                    <div className="mt-1 text-[10px] font-medium text-slate-600">{typeLabel(d.dossierType)}</div>
+                  ) : null}
                   <div className="mt-2">
                     <div className="mb-1 flex justify-between text-[10px] text-[#374151]">
                       <span>Progression</span>

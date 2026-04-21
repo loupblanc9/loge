@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAdminBulk, useTags } from "@/hooks/queries";
+import { DOSSIER_STATUS_ORDER, dossierStatusLabelFr } from "@/lib/constants/dossier-status";
 
 type Props = {
   selectedIds: string[];
@@ -13,6 +14,7 @@ export function BulkActionsBar({ selectedIds, onClear, onDone }: Props) {
   const bulk = useAdminBulk();
   const { data: tags } = useTags();
   const [tagId, setTagId] = useState("");
+  const [bulkStatus, setBulkStatus] = useState<string>("");
   const [note, setNote] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -49,6 +51,36 @@ export function BulkActionsBar({ selectedIds, onClear, onDone }: Props) {
           }
         >
           Ajouter un tag
+        </button>
+        <select
+          className="rounded-lg border border-gray-200 px-2 py-2 text-sm"
+          value={bulkStatus}
+          onChange={(e) => setBulkStatus(e.target.value)}
+        >
+          <option value="">Statut à appliquer…</option>
+          {DOSSIER_STATUS_ORDER.map((s) => (
+            <option key={s} value={s}>
+              {dossierStatusLabelFr[s]}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          disabled={!bulkStatus || bulk.isPending}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#111827] hover:bg-gray-50 disabled:opacity-40"
+          onClick={() =>
+            bulk.mutate(
+              { action: "setStatus", dossierIds: selectedIds, status: bulkStatus },
+              {
+                onSuccess: () => {
+                  setBulkStatus("");
+                  onDone();
+                },
+              },
+            )
+          }
+        >
+          Appliquer le statut
         </button>
         <button
           type="button"

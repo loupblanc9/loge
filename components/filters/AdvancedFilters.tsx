@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTags } from "@/hooks/queries";
 import { defaultFilterState, type FilterState } from "@/types/filters";
+import { DOSSIER_STATUS_ORDER, dossierStatusLabelFr } from "@/lib/constants/dossier-status";
 
 export type { FilterState } from "@/types/filters";
 export { defaultFilterState } from "@/types/filters";
@@ -100,17 +101,11 @@ export function AdvancedFilters({
   return (
     <div className="relative flex flex-wrap items-center gap-2 border-l border-gray-200 pl-4">
       <Dropdown label="Statut" open={open === "s"} onToggle={() => setOpen((k) => (k === "s" ? null : "s"))}>
-        <div className="flex flex-col gap-2">
-          {(
-            [
-              ["incomplete", "Incomplet"],
-              ["review", "En cours de vérification"],
-              ["complete", "Complet"],
-            ] as const
-          ).map(([v, label]) => (
+        <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+          {DOSSIER_STATUS_ORDER.map((v) => (
             <Toggle
               key={v}
-              label={label}
+              label={dossierStatusLabelFr[v]}
               checked={draft.status.includes(v)}
               onChange={(c) =>
                 setDraft((d) => ({
@@ -123,13 +118,69 @@ export function AdvancedFilters({
         </div>
       </Dropdown>
 
+      <Dropdown label="Type" open={open === "ty"} onToggle={() => setOpen((k) => (k === "ty" ? null : "ty"))}>
+        <div className="flex flex-col gap-2">
+          {(
+            [
+              ["social", "Social"],
+              ["prive", "Privé"],
+            ] as const
+          ).map(([v, label]) => (
+            <Toggle
+              key={v}
+              label={label}
+              checked={draft.dossierType.includes(v)}
+              onChange={(c) =>
+                setDraft((d) => ({
+                  ...d,
+                  dossierType: c ? [...d.dossierType, v] : d.dossierType.filter((x) => x !== v),
+                }))
+              }
+            />
+          ))}
+        </div>
+      </Dropdown>
+
+      <Dropdown label="Progression" open={open === "pr"} onToggle={() => setOpen((k) => (k === "pr" ? null : "pr"))}>
+        <div className="flex flex-col gap-2 text-sm">
+          <button
+            type="button"
+            className="rounded-lg border border-gray-100 px-2 py-1.5 text-left hover:bg-gray-50"
+            onClick={() => setDraft((d) => ({ ...d, progressMin: "", progressMax: "" }))}
+          >
+            Toutes progressions
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-gray-100 px-2 py-1.5 text-left hover:bg-gray-50"
+            onClick={() => setDraft((d) => ({ ...d, progressMin: "0", progressMax: "25" }))}
+          >
+            0 % – 25 %
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-gray-100 px-2 py-1.5 text-left hover:bg-gray-50"
+            onClick={() => setDraft((d) => ({ ...d, progressMin: "26", progressMax: "75" }))}
+          >
+            26 % – 75 %
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-gray-100 px-2 py-1.5 text-left hover:bg-gray-50"
+            onClick={() => setDraft((d) => ({ ...d, progressMin: "76", progressMax: "100" }))}
+          >
+            76 % – 100 %
+          </button>
+        </div>
+      </Dropdown>
+
       <Dropdown label="Activité" open={open === "a"} onToggle={() => setOpen((k) => (k === "a" ? null : "a"))}>
         <div className="flex flex-col gap-2">
           {(
             [
               ["notOpened", "Non ouvert"],
               ["recent", "Récent"],
-              ["pending", "En attente"],
+              ["pending", "En vérification (file)"],
             ] as const
           ).map(([v, label]) => (
             <Toggle

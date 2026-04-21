@@ -36,8 +36,9 @@ export type ListDossiersQuery = {
   createdTo?: Date;
   updatedFrom?: Date;
   updatedTo?: Date;
-  /** notOpened | recent | pending */
+  /** notOpened | recent | pending (file métier = statut en vérification) */
   activity?: string[];
+  dossierTypes?: ("social" | "prive")[];
 };
 
 function parseMulti<T extends string>(v: string | null): T[] | undefined {
@@ -66,6 +67,11 @@ export function parseListQuery(searchParams: URLSearchParams): ListDossiersQuery
     : parseMulti(searchParams.get("tagIds") ?? "");
   const activity = parseMulti(searchParams.get("activity") ?? "") ?? searchParams.getAll("activity");
 
+  const dossierTypeRaw = searchParams.getAll("dossierType").length
+    ? searchParams.getAll("dossierType")
+    : parseMulti(searchParams.get("dossierTypes") ?? "");
+  const dossierTypes = dossierTypeRaw as ("social" | "prive")[] | undefined;
+
   const createdFrom = searchParams.get("createdFrom") ? new Date(searchParams.get("createdFrom")!) : undefined;
   const createdTo = searchParams.get("createdTo") ? new Date(searchParams.get("createdTo")!) : undefined;
   const updatedFrom = searchParams.get("updatedFrom") ? new Date(searchParams.get("updatedFrom")!) : undefined;
@@ -88,6 +94,7 @@ export function parseListQuery(searchParams: URLSearchParams): ListDossiersQuery
     updatedFrom,
     updatedTo,
     activity: activity?.length ? activity : undefined,
+    dossierTypes: dossierTypes?.length ? dossierTypes : undefined,
   };
 }
 
@@ -146,7 +153,7 @@ function buildWhere(
     const actOr: Prisma.DossierWhereInput[] = [];
     for (const a of query.activity) {
       if (a === "notOpened") actOr.push({ isOpened: false });
-      if (a === "pending") actOr.push({ status: "review" });
+      if (a === "pending") actOr.push({ status: "in_review" });
       if (a === "recent") {
         const since = new Date();
         since.setDate(since.getDate() - RECENT_DAYS);
@@ -166,7 +173,7 @@ function buildWhere(
   }
 
   if (query.dossierComplet) {
-    and.push({ status: "complete", progress: 100 });
+    and.push({ status: "validated", progress: 100 });
   }
 
   if (query.q?.trim()) {

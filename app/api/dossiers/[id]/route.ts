@@ -5,6 +5,7 @@ import { deleteDossier, getDossierById, updateDossier } from "@/services/dossier
 import { buildMissingSummary } from "@/services/dossier-metadata.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
 import type { DossierStatus } from "@prisma/client";
+import { zDossierStatus } from "@/lib/constants/dossier-status";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -30,7 +31,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 const patchSchema = z.object({
   title: z.string().optional(),
-  status: z.enum(["incomplete", "review", "complete"]).optional(),
+  status: zDossierStatus.optional(),
 });
 
 export async function PATCH(req: Request, ctx: Ctx) {

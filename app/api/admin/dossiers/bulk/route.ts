@@ -10,6 +10,7 @@ import {
 } from "@/services/bulk.service";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
 import type { DossierStatus } from "@prisma/client";
+import { zDossierStatus } from "@/lib/constants/dossier-status";
 
 const schema = z.discriminatedUnion("action", [
   z.object({
@@ -20,7 +21,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("setStatus"),
     dossierIds: z.array(z.string()).min(1),
-    status: z.enum(["incomplete", "review", "complete"]),
+    status: zDossierStatus,
   }),
   z.object({
     action: z.literal("markProcessed"),

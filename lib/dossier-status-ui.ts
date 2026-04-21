@@ -1,20 +1,37 @@
 import type { DossierStatus } from "@/types/api";
+import { dossierStatusLabelFr } from "@/lib/constants/dossier-status";
 
-/** Libellés & couleurs alignés maquettes (Validé, Envoyé, Refusé, Manquant, En cours…) */
-export function dossierStatusUi(status: DossierStatus, progress: number) {
-  if (status === "complete") {
-    return { label: "Validé", className: "bg-emerald-50 text-[#16A34A] ring-1 ring-emerald-200" };
+type StatusUi = { label: string; className: string };
+
+/** Badges lisibles côté liste et fiche — alignés produit DOMICIAL */
+export function dossierStatusUi(status: DossierStatus, progress: number): StatusUi {
+  switch (status) {
+    case "pending":
+      return {
+        label: dossierStatusLabelFr.pending,
+        className: "bg-sky-50 text-sky-800 ring-1 ring-sky-200",
+      };
+    case "incomplete":
+      return {
+        label: progress === 0 ? "Manquant" : dossierStatusLabelFr.incomplete,
+        className: "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
+      };
+    case "in_review":
+      return {
+        label: dossierStatusLabelFr.in_review,
+        className: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
+      };
+    case "validated":
+      return {
+        label: dossierStatusLabelFr.validated,
+        className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+      };
+    case "rejected":
+      return {
+        label: dossierStatusLabelFr.rejected,
+        className: "bg-red-50 text-red-700 ring-1 ring-red-200",
+      };
   }
-  if (status === "review") {
-    if (progress > 0) {
-      return { label: "En cours", className: "bg-amber-50 text-[#F59E0B] ring-1 ring-amber-200" };
-    }
-    return { label: "Envoyé", className: "bg-blue-50 text-[#2563EB] ring-1 ring-blue-200" };
-  }
-  return {
-    label: progress === 0 && status === "incomplete" ? "Manquant" : "Incomplet",
-    className: "bg-gray-100 text-[#9CA3AF] ring-1 ring-gray-200",
-  };
 }
 
 export function documentStatusUi(status: import("@/types/api").DocumentStatus) {

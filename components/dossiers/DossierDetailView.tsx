@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { SessionUser, DossierDocument } from "@/types/api";
+import { usePathname, useRouter } from "next/navigation";
+import type { DossierStatus, SessionUser, DossierDocument } from "@/types/api";
 import {
   useDossier,
   useMarkDossierOpen,
@@ -13,7 +14,10 @@ import {
   useNotes,
   useAddNote,
   useCreateGuarantor,
+  usePatchDossier,
+  useDeleteDossier,
 } from "@/hooks/queries";
+import { DOSSIER_STATUS_ORDER, dossierStatusLabelFr } from "@/lib/constants/dossier-status";
 import { labelForType } from "@/lib/constants/document-types";
 import { dossierStatusUi, documentStatusUi } from "@/lib/dossier-status-ui";
 import { formatDateTimeFr } from "@/lib/format";
@@ -59,6 +63,11 @@ export function DossierDetailView({
   const createG = useCreateGuarantor(dossierId);
   const notesQ = useNotes(dossierId, admin);
   const addNote = useAddNote(dossierId);
+  const patchDossier = usePatchDossier();
+  const deleteDossier = useDeleteDossier();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!dossierId || openedRef.current) return;
@@ -85,6 +94,16 @@ export function DossierDetailView({
             <p className="text-sm text-[#374151]">
               Client : <span className="font-medium text-[#111827]">{dossier.user.name}</span>
             </p>
+            {admin ? (
+              <p className="mt-1 text-xs text-gray-500">
+                {dossier.user.email} · créé le {formatDateTimeFr(dossier.createdAt)}
+                {dossier.dossierType ? (
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                    {dossier.dossierType === "social" ? "Dossier social" : "Dossier privé"}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
             {dossier.title ? <p className="mt-1 text-sm text-[#374151]">{dossier.title}</p> : null}
           </div>
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${st.className}`}>
@@ -139,8 +158,27 @@ export function DossierDetailView({
           </section>
 
           {admin && (
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-[#111827]">Actions</h2>
+            <section className="rounded-xl border border-indigo-100 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-[#111827]">Actions équipe</h2>
+              <p className="mt-0.5 text-xs text-gray-500">Statut global, traitement des pièces et suppression.</p>
+              <label className="mt-3 block text-xs font-medium text-gray-600">
+                Statut du dossier
+                <select
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-[#111827]"
+                  value={dossier.status}
+                  disabled={patchDossier.isPending}
+                  onChange={(e) => {
+                    const status = e.target.value as DossierStatus;
+                    patchDossier.mutate({ id: dossierId, status }, { onSuccess: () => refetch() });
+                  }}
+                >
+                  {DOSSIER_STATUS_ORDER.map((s) => (
+                    <option key={s} value={s}>
+                      {dossierStatusLabelFr[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className="mt-3 flex flex-col gap-2">
                 <button
                   type="button"
@@ -163,6 +201,13 @@ export function DossierDetailView({
                 >
                   + Ajouter un garant
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#DC2626] hover:bg-red-50"
+                >
+                  Supprimer ce dossier…
+                </button>
               </div>
             </section>
           )}
@@ -170,6 +215,7 @@ export function DossierDetailView({
           {admin && (
             <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-[#111827]">Notes internes</h2>
+              <p className="text-xs text-gray-500">Historique d’échanges équipe (anti-chronologique).</p>
               <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-[#374151]">
                 {notesQ.data?.notes.map((n) => (
                   <li key={n.id} className="rounded border border-gray-100 bg-gray-50 p-2">
@@ -239,6 +285,43 @@ export function DossierDetailView({
 
       {tagOpen && (
         <TagPickerModal dossierId={dossierId} onClose={() => setTagOpen(false)} onDone={() => refetch()} />
+      )}
+
+      {admin && confirmDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div className="max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-[#111827]">Supprimer le dossier ?</h3>
+            <p className="mt-2 text-sm text-[#374151]">
+              Cette action supprime définitivement le dossier <strong>{dossier.reference}</strong> et les données associées.
+              Les fichiers ne seront plus accessibles.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-[#DC2626] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                disabled={deleteDossier.isPending}
+                onClick={() =>
+                  deleteDossier.mutate(dossierId, {
+                    onSuccess: () => {
+                      setConfirmDelete(false);
+                      if (pathname.includes("/dossiers/vue")) router.replace("/dossiers/vue");
+                      else router.push("/dossiers/tous");
+                    },
+                  })
+                }
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

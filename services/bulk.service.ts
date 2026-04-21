@@ -31,7 +31,7 @@ export async function bulkMarkProcessed(dossierIds: string[]) {
     const allApproved = all.length > 0 && all.every((x) => x.status === "approved");
     await prisma.dossier.update({
       where: { id },
-      data: { status: allApproved ? "complete" : "review" },
+      data: { status: allApproved ? "validated" : "in_review" },
     });
   }
 }

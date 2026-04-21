@@ -8,7 +8,7 @@ export type SessionUser = {
   avatarUrl: string | null;
 };
 
-export type DossierStatus = "incomplete" | "review" | "complete";
+export type DossierStatus = "pending" | "incomplete" | "in_review" | "validated" | "rejected";
 
 export type DocumentStatus = "missing" | "uploaded" | "approved" | "rejected";
 

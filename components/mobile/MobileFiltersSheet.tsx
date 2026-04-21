@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { FilterState } from "@/types/filters";
 import { useTags } from "@/hooks/queries";
+import { DOSSIER_STATUS_ORDER, dossierStatusLabelFr } from "@/lib/constants/dossier-status";
 
 export function MobileFiltersSheet({
   open,
@@ -26,7 +27,7 @@ export function MobileFiltersSheet({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end bg-black/40">
-      <div className="w-full rounded-t-3xl bg-white p-5 shadow-2xl">
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-[#111827]">Filtres avancés</h2>
           <button type="button" className="text-sm text-gray-500" onClick={onClose}>
@@ -34,37 +35,61 @@ export function MobileFiltersSheet({
           </button>
         </div>
 
-        <Section title="Statut">
+        <Section title="Statut dossier">
+          {DOSSIER_STATUS_ORDER.map((v) => (
+            <Check
+              key={v}
+              label={dossierStatusLabelFr[v]}
+              checked={draft.status.includes(v)}
+              onChange={(c) =>
+                setDraft((d) => ({
+                  ...d,
+                  status: c ? [...d.status, v] : d.status.filter((x) => x !== v),
+                }))
+              }
+            />
+          ))}
+        </Section>
+
+        <Section title="Type de dossier">
           <Check
-            label="Incomplet"
-            checked={draft.status.includes("incomplete")}
+            label="Social"
+            checked={draft.dossierType.includes("social")}
             onChange={(c) =>
               setDraft((d) => ({
                 ...d,
-                status: c ? [...d.status, "incomplete"] : d.status.filter((x) => x !== "incomplete"),
+                dossierType: c ? [...d.dossierType, "social"] : d.dossierType.filter((x) => x !== "social"),
               }))
             }
           />
           <Check
-            label="En attente"
-            checked={draft.status.includes("review")}
+            label="Privé"
+            checked={draft.dossierType.includes("prive")}
             onChange={(c) =>
               setDraft((d) => ({
                 ...d,
-                status: c ? [...d.status, "review"] : d.status.filter((x) => x !== "review"),
+                dossierType: c ? [...d.dossierType, "prive"] : d.dossierType.filter((x) => x !== "prive"),
               }))
             }
           />
-          <Check
-            label="Validé"
-            checked={draft.status.includes("complete")}
-            onChange={(c) =>
-              setDraft((d) => ({
-                ...d,
-                status: c ? [...d.status, "complete"] : d.status.filter((x) => x !== "complete"),
-              }))
-            }
-          />
+        </Section>
+
+        <Section title="Progression">
+          <div className="flex flex-col gap-2">
+            <PresetBtn
+              label="Toutes"
+              onClick={() => setDraft((d) => ({ ...d, progressMin: "", progressMax: "" }))}
+            />
+            <PresetBtn label="0 – 25 %" onClick={() => setDraft((d) => ({ ...d, progressMin: "0", progressMax: "25" }))} />
+            <PresetBtn
+              label="26 – 75 %"
+              onClick={() => setDraft((d) => ({ ...d, progressMin: "26", progressMax: "75" }))}
+            />
+            <PresetBtn
+              label="76 – 100 %"
+              onClick={() => setDraft((d) => ({ ...d, progressMin: "76", progressMax: "100" }))}
+            />
+          </div>
         </Section>
 
         <Section title="Activité">
@@ -89,7 +114,7 @@ export function MobileFiltersSheet({
             }
           />
           <Check
-            label="En attente"
+            label="En vérification (file)"
             checked={draft.activity.includes("pending")}
             onChange={(c) =>
               setDraft((d) => ({
@@ -161,6 +186,18 @@ export function MobileFiltersSheet({
   );
 }
 
+function PresetBtn({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-xl border border-gray-200 px-3 py-2 text-left text-sm text-[#374151] hover:bg-gray-50"
+    >
+      {label}
+    </button>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
@@ -178,4 +215,3 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
     </label>
   );
 }
-

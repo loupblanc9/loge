@@ -6,6 +6,7 @@ import type {
   DossierDetail,
   DossiersListResponse,
   DossierListItem,
+  DossierStatus,
   SessionUser,
   Tag,
 } from "@/types/api";
@@ -212,6 +213,26 @@ export function useAdminBulk() {
   return useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       apiFetch("/api/admin/dossiers/bulk", { method: "POST", json: body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["dossiers"] }),
+  });
+}
+
+export function usePatchDossier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { id: string; title?: string; status?: DossierStatus }) =>
+      apiFetch(`/api/dossiers/${args.id}`, { method: "PATCH", json: { title: args.title, status: args.status } }),
+    onSuccess: (_, args) => {
+      qc.invalidateQueries({ queryKey: qk.dossier(args.id) });
+      qc.invalidateQueries({ queryKey: ["dossiers"] });
+    },
+  });
+}
+
+export function useDeleteDossier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiFetch(`/api/dossiers/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dossiers"] }),
   });
 }

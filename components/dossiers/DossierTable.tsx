@@ -17,6 +17,12 @@ type Props = {
   admin: boolean;
 };
 
+function dossierTypeLabel(dt: DossierListItem["dossierType"]) {
+  if (dt === "social") return "Social";
+  if (dt === "prive") return "Privé";
+  return "—";
+}
+
 export function DossierTable({ admin }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,11 +104,13 @@ export function DossierTable({ admin }: Props) {
                 )}
                 <th className="px-3 py-3">ID dossier</th>
                 <th className="px-3 py-3">Nom client</th>
+                <th className="px-3 py-3 whitespace-nowrap">Type</th>
                 <th className="px-3 py-3">Bien loué</th>
                 <th className="px-3 py-3">Statut</th>
                 <th className="px-3 py-3 w-40">Progression</th>
                 <th className="px-3 py-3">Tags</th>
                 <th className="px-3 py-3">Documents manquants</th>
+                <th className="px-3 py-3 whitespace-nowrap">Créé le</th>
                 <th className="px-3 py-3">Dernière mise à jour</th>
                 <th className="px-3 py-3 w-28">Actions</th>
               </tr>
@@ -155,6 +163,11 @@ export function DossierTable({ admin }: Props) {
                         <span className="font-medium text-[#111827]">{row.user.name}</span>
                       </div>
                     </td>
+                    <td className="whitespace-nowrap px-3 py-3">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                        {dossierTypeLabel(row.dossierType)}
+                      </span>
+                    </td>
                     <td className="max-w-[200px] truncate px-3 py-3 text-[#374151]" title={row.title || "—"}>
                       {row.title || "—"}
                     </td>
@@ -180,6 +193,9 @@ export function DossierTable({ admin }: Props) {
                       ) : (
                         <span className="text-[#DC2626]">{row.documentsStats.missing} manquant(s)</span>
                       )}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-xs text-[#374151]">
+                      {formatDateTimeFr(row.createdAt)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-xs text-[#374151]">
                       {formatDateTimeFr(row.updatedAt)}
@@ -236,11 +252,13 @@ export function DossierTable({ admin }: Props) {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border-2 border-dashed border-gray-300 bg-white p-8 text-center text-sm text-[#374151]">
-        <div className="text-2xl">☁</div>
-        <p className="mt-2">Glissez et déposez vos fichiers ici ou cliquez pour sélectionner</p>
-        <p className="mt-1 text-xs text-gray-400">Utilisez la fiche dossier pour associer un document à un type.</p>
-      </div>
+      {!admin && (
+        <div className="mt-6 rounded-xl border-2 border-dashed border-gray-300 bg-white p-8 text-center text-sm text-[#374151]">
+          <div className="text-2xl">☁</div>
+          <p className="mt-2">Glissez et déposez vos fichiers ici ou cliquez pour sélectionner</p>
+          <p className="mt-1 text-xs text-gray-400">Utilisez la fiche dossier pour associer un document à un type.</p>
+        </div>
+      )}
 
       {tagFor && <TagPickerModal dossierId={tagFor} onClose={() => setTagFor(null)} onDone={() => refetch()} />}
     </div>

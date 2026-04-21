@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { requireAuth, isAdmin } from "@/lib/auth/get-session";
 import {
   setTenantDocumentStatus,
@@ -8,7 +7,7 @@ import {
 import { jsonError, handleRouteError } from "@/lib/api/errors";
 import { getFormDataFileBlob, uploadDeclaredMime, uploadOriginalName } from "@/lib/api/form-file";
 import { getEnv } from "@/lib/env";
-import { zDocumentStatus } from "@/lib/constants/validation";
+import { zDocumentStatusPatchBody } from "@/lib/constants/validation";
 
 type Ctx = { params: Promise<{ id: string; docId: string }> };
 
@@ -40,16 +39,12 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 }
 
-const patchSchema = z.object({
-  status: zDocumentStatus,
-});
-
 export async function PATCH(req: Request, ctx: Ctx) {
   try {
     const user = await requireAuth();
     const { id, docId } = await ctx.params;
     const json = await req.json();
-    const parsed = patchSchema.safeParse(json);
+    const parsed = zDocumentStatusPatchBody.safeParse(json);
     if (!parsed.success) return jsonError("Données invalides", 400);
     const doc = await setTenantDocumentStatus(id, docId, parsed.data.status, {
       admin: isAdmin(user.role),
