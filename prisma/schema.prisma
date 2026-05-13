@@ -113,6 +113,8 @@ model Document {
   /// Types métier : ID, RIB, TAX, CONTRACT, etc.
   type      String
   fileUrl   String?
+  /// Clé objet dans Storage (ex. {userId}/{dossierId}/{documentId}.pdf) — source de vérité si STORAGE_DRIVER=supabase
+  storagePath String?
   fileName  String?
   mimeType  String?
   sizeBytes Int?
@@ -149,6 +151,7 @@ model GuarantorDocument {
 
   type      String
   fileUrl   String?
+  storagePath String?
   fileName  String?
   mimeType  String?
   sizeBytes Int?

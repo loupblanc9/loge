@@ -94,6 +94,32 @@ function extractKeyFromFileUrl(fileUrl: string): string | null {
   }
 }
 
+function extFromMime(mime: string): string {
+  if (mime === "application/pdf") return "pdf";
+  if (mime === "image/jpeg") return "jpg";
+  if (mime === "image/png") return "png";
+  return "bin";
+}
+
+/** Supprime le binaire selon le pilote actif (évite d’appeler le mauvais backend en cas de migration). */
+async function deleteStoredBlob(doc: { storagePath?: string | null; fileUrl?: string | null }) {
+  const driver = getEnv().STORAGE_DRIVER;
+  try {
+    if (driver === "supabase") {
+      if (doc.storagePath) {
+        await getStorage().delete(doc.storagePath);
+      }
+      return;
+    }
+    if (doc.fileUrl) {
+      const k = extractKeyFromFileUrl(doc.fileUrl);
+      if (k) await getStorage().delete(k);
+    }
+  } catch {
+    // best effort
+  }
+}
+
 export async function uploadTenantDocument(
   dossierId: string,
   documentId: string,
@@ -115,22 +141,42 @@ export async function uploadTenantDocument(
   const doc = dossier.documents.find((d) => d.id === documentId);
   if (!doc) return { error: "NOT_FOUND" as const };
 
-  if (doc.fileUrl) {
-    const oldKey = extractKeyFromFileUrl(doc.fileUrl);
-    if (oldKey) await getStorage().delete(oldKey).catch(() => {});
-  }
+  await deleteStoredBlob(doc);
 
   const storage = getStorage();
-  const { key, publicUrl } = await storage.put(buffer, {
-    mimeType: resolvedMime,
-    sizeBytes: buffer.length,
-    originalName,
-    key: `${dossierId}/tenant/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`,
-  });
+  const driver = getEnv().STORAGE_DRIVER;
+
+  let storagePath: string | null = null;
+  let publicUrl: string | null = null;
+  let key: string;
+
+  if (driver === "supabase") {
+    const ext = extFromMime(resolvedMime);
+    key = `${dossier.userId}/${dossierId}/${documentId}.${ext}`;
+    const r = await storage.put(buffer, {
+      mimeType: resolvedMime,
+      sizeBytes: buffer.length,
+      originalName,
+      key,
+    });
+    storagePath = r.key;
+    publicUrl = null;
+  } else {
+    key = `${dossierId}/tenant/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`;
+    const r = await storage.put(buffer, {
+      mimeType: resolvedMime,
+      sizeBytes: buffer.length,
+      originalName,
+      key,
+    });
+    publicUrl = r.publicUrl;
+    storagePath = null;
+  }
 
   await prisma.document.update({
     where: { id: documentId },
     data: {
+      storagePath,
       fileUrl: publicUrl,
       fileName: originalName,
       mimeType: resolvedMime,
@@ -140,7 +186,7 @@ export async function uploadTenantDocument(
   });
 
   await recalculateDossier(dossierId);
-  return { ok: true as const, fileUrl: publicUrl, key };
+  return { ok: true as const, fileUrl: publicUrl, storagePath, key };
 }
 
 export async function setTenantDocumentStatus(
@@ -159,14 +205,12 @@ export async function setTenantDocumentStatus(
 
   const data: Prisma.DocumentUpdateInput = { status };
   if (status === "missing") {
+    data.storagePath = null;
     data.fileUrl = null;
     data.fileName = null;
     data.mimeType = null;
     data.sizeBytes = null;
-    if (doc.fileUrl) {
-      const k = extractKeyFromFileUrl(doc.fileUrl);
-      if (k) await getStorage().delete(k).catch(() => {});
-    }
+    await deleteStoredBlob(doc);
   }
 
   await prisma.document.update({ where: { id: documentId }, data });
@@ -195,22 +239,41 @@ export async function uploadGuarantorDocument(
   const doc = guarantor.documents.find((d) => d.id === documentId);
   if (!doc) return { error: "NOT_FOUND" as const };
 
-  if (doc.fileUrl) {
-    const oldKey = extractKeyFromFileUrl(doc.fileUrl);
-    if (oldKey) await getStorage().delete(oldKey).catch(() => {});
-  }
+  await deleteStoredBlob(doc);
 
   const storage = getStorage();
-  const { publicUrl } = await storage.put(buffer, {
-    mimeType: resolvedMime,
-    sizeBytes: buffer.length,
-    originalName,
-    key: `${guarantor.dossierId}/guarantor/${guarantorId}/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`,
-  });
+  const driver = getEnv().STORAGE_DRIVER;
+
+  let storagePath: string | null = null;
+  let publicUrl: string | null = null;
+
+  if (driver === "supabase") {
+    const ext = extFromMime(resolvedMime);
+    const key = `${guarantor.dossier.userId}/${guarantor.dossierId}/guarantor-${guarantorId}-${documentId}.${ext}`;
+    const r = await storage.put(buffer, {
+      mimeType: resolvedMime,
+      sizeBytes: buffer.length,
+      originalName,
+      key,
+    });
+    storagePath = r.key;
+    publicUrl = null;
+  } else {
+    const key = `${guarantor.dossierId}/guarantor/${guarantorId}/${documentId}-${originalName.replace(/[^\w.-]/g, "_")}`;
+    const r = await storage.put(buffer, {
+      mimeType: resolvedMime,
+      sizeBytes: buffer.length,
+      originalName,
+      key,
+    });
+    publicUrl = r.publicUrl;
+    storagePath = null;
+  }
 
   await prisma.guarantorDocument.update({
     where: { id: documentId },
     data: {
+      storagePath,
       fileUrl: publicUrl,
       fileName: originalName,
       mimeType: resolvedMime,
@@ -220,7 +283,7 @@ export async function uploadGuarantorDocument(
   });
 
   await recalculateDossier(guarantor.dossierId);
-  return { ok: true as const, fileUrl: publicUrl };
+  return { ok: true as const, fileUrl: publicUrl, storagePath };
 }
 
 export async function setGuarantorDocumentStatus(
@@ -240,14 +303,12 @@ export async function setGuarantorDocumentStatus(
 
   const data: Prisma.GuarantorDocumentUpdateInput = { status };
   if (status === "missing") {
+    data.storagePath = null;
     data.fileUrl = null;
     data.fileName = null;
     data.mimeType = null;
     data.sizeBytes = null;
-    if (doc.fileUrl) {
-      const k = extractKeyFromFileUrl(doc.fileUrl);
-      if (k) await getStorage().delete(k).catch(() => {});
-    }
+    await deleteStoredBlob(doc);
   }
 
   await prisma.guarantorDocument.update({ where: { id: documentId }, data });

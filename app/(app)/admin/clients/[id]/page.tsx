@@ -7,6 +7,7 @@ import { useMe, useAdminClientDetail, usePatchAdminClient } from "@/hooks/querie
 import { formatDateTimeFr } from "@/lib/format";
 import { dossierStatusUi } from "@/lib/dossier-status-ui";
 import { labelForType } from "@/lib/constants/document-types";
+import { AdminDossierDocumentLinks } from "@/components/admin/AdminDossierDocumentLinks";
 
 export default function AdminClientDetailPage() {
   const router = useRouter();
@@ -150,18 +151,7 @@ export default function AdminClientDetailPage() {
                     {d.documents.map((doc) => (
                       <li key={doc.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-50 py-1">
                         <span>{labelForType(doc.type)} (locataire)</span>
-                        {doc.fileUrl ? (
-                          <span className="flex gap-2">
-                            <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-[#2563EB]">
-                              Voir
-                            </a>
-                            <a href={`${doc.fileUrl}${doc.fileUrl.includes("?") ? "&" : "?"}download=1`} className="text-xs text-gray-600">
-                              Télécharger
-                            </a>
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-400">Manquant</span>
-                        )}
+                        <AdminDossierDocumentLinks dossierId={d.id} doc={doc} />
                       </li>
                     ))}
                     {d.guarantors.flatMap((g) =>
@@ -170,18 +160,7 @@ export default function AdminClientDetailPage() {
                           <span>
                             {labelForType(doc.type)} (garant{g.name ? ` ${g.name}` : ""})
                           </span>
-                          {doc.fileUrl ? (
-                            <span className="flex gap-2">
-                              <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-[#2563EB]">
-                                Voir
-                              </a>
-                              <a href={`${doc.fileUrl}${doc.fileUrl.includes("?") ? "&" : "?"}download=1`} className="text-xs text-gray-600">
-                                Télécharger
-                              </a>
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">Manquant</span>
-                          )}
+                          <AdminDossierDocumentLinks dossierId={d.id} doc={doc} guarantorId={g.id} />
                         </li>
                       )),
                     )}

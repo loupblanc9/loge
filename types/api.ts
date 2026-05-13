@@ -69,6 +69,8 @@ export type DossierDocument = {
   dossierId: string;
   type: string;
   fileUrl: string | null;
+  /** Clé objet bucket privé (Supabase), ex. `{userId}/{dossierId}/{documentId}.pdf` */
+  storagePath?: string | null;
   fileName: string | null;
   mimeType: string | null;
   sizeBytes: number | null;

@@ -6,7 +6,6 @@ import { requireAuth, isAdmin } from "@/lib/auth/get-session";
 import { resolveSafeUploadPath } from "@/lib/files/safe-local-path";
 import { getEnv } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
-import { getStorage } from "@/lib/storage/factory";
 import { jsonError, handleRouteError } from "@/lib/api/errors";
 
 type Ctx = { params: Promise<{ path: string[] }> };
@@ -56,12 +55,23 @@ function guessMimeFromName(name: string | null): string | null {
   }
 }
 
+/**
+ * Lecture directe depuis le disque — **uniquement** si `STORAGE_DRIVER=local`.
+ * Supabase : URLs signées. S3 : à traiter séparément (presign ou autre) — pas ce routeur.
+ */
 export async function GET(req: Request, ctx: Ctx) {
   try {
+    if (getEnv().STORAGE_DRIVER !== "local") {
+      return jsonError(
+        "Ce point de terminaison fichier n’est actif qu’en STORAGE_DRIVER=local. Utilisez les URLs signées Supabase.",
+        404,
+      );
+    }
+
     const user = await requireAuth();
     const { path: segments } = await ctx.params;
     if (!segments?.length) return jsonError("Chemin invalide", 400);
-    const key = segments.map((s) => decodeURIComponent(s)).join("/"); // clé logique stockage / lookup DB
+    const key = segments.map((s) => decodeURIComponent(s)).join("/");
     const { searchParams } = new URL(req.url);
     const download = searchParams.get("download") === "1";
 
@@ -71,32 +81,18 @@ export async function GET(req: Request, ctx: Ctx) {
 
     const dbMeta = await findDbMetaForKey(key);
     const mime =
-      dbMeta?.mimeType ??
-      guessMimeFromName(dbMeta?.fileName ?? null) ??
-      "application/octet-stream";
+      dbMeta?.mimeType ?? guessMimeFromName(dbMeta?.fileName ?? null) ?? "application/octet-stream";
     const safeName = (dbMeta?.fileName ?? segments.at(-1) ?? "file").replace(/[^\w.\- ()]/g, "_");
     const disposition = download ? "attachment" : "inline";
 
-    if (getEnv().STORAGE_DRIVER === "local") {
-      const full = resolveSafeUploadPath(segments as string[]);
-      if (!full) return jsonError("Chemin invalide", 400);
-      const stat = await fs.stat(full).catch(() => null);
-      if (!stat) return jsonError("Fichier introuvable", 404);
-      const stream = createReadStream(full);
-      return new NextResponse(Readable.toWeb(stream) as BodyInit, {
-        headers: {
-          "Content-Length": String(stat.size),
-          "Content-Type": mime,
-          "Content-Disposition": `${disposition}; filename="${safeName}"`,
-          "Cache-Control": "private, max-age=3600",
-        },
-      });
-    }
-
-    const storage = getStorage();
-    const stream = await storage.getReadStream(key);
-    return new NextResponse(Readable.toWeb(stream as Readable) as BodyInit, {
+    const full = resolveSafeUploadPath(segments as string[]);
+    if (!full) return jsonError("Chemin invalide", 400);
+    const stat = await fs.stat(full).catch(() => null);
+    if (!stat) return jsonError("Fichier introuvable", 404);
+    const stream = createReadStream(full);
+    return new NextResponse(Readable.toWeb(stream) as BodyInit, {
       headers: {
+        "Content-Length": String(stat.size),
         "Content-Type": mime,
         "Content-Disposition": `${disposition}; filename="${safeName}"`,
         "Cache-Control": "private, max-age=3600",

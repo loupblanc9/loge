@@ -24,12 +24,35 @@ import { formatDateTimeFr } from "@/lib/format";
 import { canUploadDocumentStatus, firstDocSlotForUpload } from "@/lib/upload-slot";
 import { TagBadges } from "./TagBadges";
 import { TagPickerModal } from "./TagPickerModal";
+import { guarantorDocFileApiPath, tenantDocFileApiPath } from "@/lib/client/document-file-proxy";
 import { DocumentFileActions } from "./DocumentFileActions";
 
-function DocThumb({ url, name }: { url: string | null; name: string | null }) {
-  if (!url) return <div className="h-12 w-16 shrink-0 rounded border border-dashed border-gray-200 bg-gray-50" />;
-  const isImg = url.match(/\.(jpg|jpeg|png)$/i) || name?.match(/\.(jpg|jpeg|png)$/i);
-  if (isImg) {
+function DocThumb({
+  dossierId,
+  docId,
+  guarantorId,
+  doc,
+}: {
+  dossierId: string;
+  docId: string;
+  guarantorId?: string | null;
+  doc: Pick<DossierDocument, "fileUrl" | "fileName" | "mimeType" | "storagePath">;
+}) {
+  const url =
+    doc.fileUrl ??
+    (doc.storagePath
+      ? guarantorId
+        ? guarantorDocFileApiPath(guarantorId, docId, false)
+        : tenantDocFileApiPath(dossierId, docId, false)
+      : null);
+  const name = doc.fileName ?? null;
+
+  if (!url && !doc.storagePath) {
+    return <div className="h-12 w-16 shrink-0 rounded border border-dashed border-gray-200 bg-gray-50" />;
+  }
+
+  const isImg = doc.mimeType?.startsWith("image/") || !!name?.match(/\.(jpe?g|png)$/i);
+  if (isImg && url) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={url} alt="" className="h-12 w-16 rounded border object-cover" />
@@ -374,7 +397,7 @@ function DocumentListSection({
         <ul className="divide-y divide-gray-100">
           {documents.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-3 p-4">
-              <DocThumb url={d.fileUrl} name={d.fileName} />
+              <DocThumb dossierId={dossierId} docId={d.id} doc={d} />
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-[#111827]">{labelForType(d.type)}</div>
                 <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${documentStatusUi(d.status).className}`}>
@@ -382,7 +405,7 @@ function DocumentListSection({
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <DocumentFileActions doc={d} />
+                <DocumentFileActions dossierId={dossierId} docId={d.id} doc={d} />
                 {canUpload && canUploadDocumentStatus(d.status) && (
                   <label
                     className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${
@@ -503,7 +526,7 @@ function GuarantorBlock({
       <ul className="divide-y divide-gray-100">
         {g.documents.map((d) => (
           <li key={d.id} className="flex flex-wrap items-center gap-3 p-4">
-            <DocThumb url={d.fileUrl} name={d.fileName} />
+            <DocThumb dossierId={dossierId} docId={d.id} guarantorId={g.id} doc={d} />
             <div className="min-w-0 flex-1">
               <div className="font-medium text-[#111827]">{labelForType(d.type)}</div>
               <span
@@ -513,7 +536,7 @@ function GuarantorBlock({
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <DocumentFileActions doc={d} />
+              <DocumentFileActions dossierId={dossierId} docId={d.id} guarantorId={g.id} doc={d} />
               {canUpload && canUploadDocumentStatus(d.status) && (
                 <label
                   className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white ${

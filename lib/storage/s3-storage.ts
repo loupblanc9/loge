@@ -1,6 +1,5 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
-import { Readable } from "stream";
 import type { FileStorage, StoredObjectMeta } from "@/lib/storage/types";
 import { getEnv } from "@/lib/env";
 
@@ -40,15 +39,6 @@ export class S3FileStorage implements FileStorage {
     );
     const publicUrl = this.publicBase ? `${this.publicBase}/${key}` : `s3://${this.bucket}/${key}`;
     return { key, publicUrl };
-  }
-
-  async getReadStream(key: string): Promise<NodeJS.ReadableStream> {
-    const out = await this.client.send(
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
-    if (!out.Body) throw new Error("Corps S3 illisible");
-    const body = out.Body as AsyncIterable<Uint8Array>;
-    return Readable.from(body, { objectMode: false });
   }
 
   async delete(key: string): Promise<void> {

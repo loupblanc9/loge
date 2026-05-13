@@ -430,7 +430,7 @@ function DocCard({
                 : "cursor-pointer bg-[#2563EB]"
           }`}
         >
-          {isUploading ? "Envoi…" : doc.fileUrl ? "Remplacer" : "Ajouter"}
+          {isUploading ? "Envoi…" : doc.fileUrl || doc.storagePath ? "Remplacer" : "Ajouter"}
           <input
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"

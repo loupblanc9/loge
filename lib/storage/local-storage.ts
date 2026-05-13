@@ -1,6 +1,5 @@
 import fs from "fs/promises";
 import path from "path";
-import { createReadStream } from "fs";
 import { randomUUID } from "crypto";
 import type { FileStorage, StoredObjectMeta } from "@/lib/storage/types";
 import { getEnv } from "@/lib/env";
@@ -34,11 +33,6 @@ export class LocalFileStorage implements FileStorage {
     await fs.writeFile(full, buffer);
     const publicUrl = `/api/files/${encodeURIComponent(key)}`;
     return { key, publicUrl };
-  }
-
-  async getReadStream(key: string): Promise<NodeJS.ReadableStream> {
-    const full = path.join(this.baseDir, key);
-    return createReadStream(full);
   }
 
   async delete(key: string): Promise<void> {

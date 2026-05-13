@@ -1,6 +1,7 @@
 import type { FileStorage } from "@/lib/storage/types";
 import { LocalFileStorage } from "@/lib/storage/local-storage";
 import { S3FileStorage } from "@/lib/storage/s3-storage";
+import { SupabaseBucketStorage } from "@/lib/storage/supabase-storage";
 import { getEnv } from "@/lib/env";
 
 let cached: FileStorage | null = null;
@@ -8,7 +9,9 @@ let cached: FileStorage | null = null;
 export function getStorage(): FileStorage {
   if (cached) return cached;
   const env = getEnv();
-  if (env.STORAGE_DRIVER === "s3") {
+  if (env.STORAGE_DRIVER === "supabase") {
+    cached = new SupabaseBucketStorage();
+  } else if (env.STORAGE_DRIVER === "s3") {
     if (!env.S3_BUCKET || !env.S3_REGION || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
       throw Object.assign(
         new Error(
