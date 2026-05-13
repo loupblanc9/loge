@@ -33,11 +33,19 @@ const schema = z
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === "supabase") {
-      if (!env.SUPABASE_URL?.trim()) {
+      const url = env.SUPABASE_URL?.trim() ?? "";
+      if (!url) {
         ctx.addIssue({
           code: "custom",
           message:
             "SUPABASE_URL manquante alors que STORAGE_DRIVER=supabase — copiez l’URL projet (Supabase → Settings → API).",
+          path: ["SUPABASE_URL"],
+        });
+      } else if (!url.startsWith("https://") || url.startsWith("https://sb_") || url.includes("sb_publishable")) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "SUPABASE_URL invalide : utilisez l’URL HTTPS du projet (ex. https://xxxx.supabase.co), pas une clé sb_publishable ni NEXT_PUBLIC_SUPABASE_URL mal nommée.",
           path: ["SUPABASE_URL"],
         });
       }
