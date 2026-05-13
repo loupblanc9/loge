@@ -29,13 +29,16 @@ export async function GET(req: Request, ctx: Ctx) {
       select: { storagePath: true, fileName: true },
     });
     if (!doc?.storagePath) {
-      return jsonError("Fichier introuvable", 404);
+      return jsonError("Fichier introuvable : aucun storagePath en base pour ce document.", 404);
     }
 
     const keyNorm = normalizeStorageObjectKey(doc.storagePath, getEnv().SUPABASE_STORAGE_BUCKET || "documents");
     const prefix = `${dossier.userId}/${dossier.id}/`;
     if (!keyNorm.startsWith(prefix)) {
-      return jsonError("Fichier introuvable", 404);
+      return jsonError(
+        "Fichier introuvable : storagePath ne correspond pas au dossier (vérifiez userId/dossierId dans la clé Storage).",
+        404,
+      );
     }
 
     const signed = await createSupabaseSignedUrl(doc.storagePath, {

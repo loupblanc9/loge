@@ -24,7 +24,7 @@ import { formatDateTimeFr } from "@/lib/format";
 import { canUploadDocumentStatus, firstDocSlotForUpload } from "@/lib/upload-slot";
 import { TagBadges } from "./TagBadges";
 import { TagPickerModal } from "./TagPickerModal";
-import { guarantorDocFileApiPath, tenantDocFileApiPath } from "@/lib/client/document-file-proxy";
+import { fetchDocumentSignedUrl } from "@/lib/client/fetch-document-signed-url";
 import { DocumentFileActions } from "./DocumentFileActions";
 
 function DocThumb({
@@ -38,17 +38,33 @@ function DocThumb({
   guarantorId?: string | null;
   doc: Pick<DossierDocument, "fileUrl" | "fileName" | "mimeType" | "storagePath">;
 }) {
-  const url =
-    doc.fileUrl ??
-    (doc.storagePath
-      ? guarantorId
-        ? guarantorDocFileApiPath(guarantorId, docId, false)
-        : tenantDocFileApiPath(dossierId, docId, false)
-      : null);
   const name = doc.fileName ?? null;
+  const [signedThumb, setSignedThumb] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (doc.fileUrl || !doc.storagePath) return;
+    const isImg = doc.mimeType?.startsWith("image/") || !!name?.match(/\.(jpe?g|png)$/i);
+    if (!isImg) return;
+
+    let cancelled = false;
+    fetchDocumentSignedUrl({ dossierId, docId, guarantorId }, false)
+      .then(({ signedUrl }) => {
+        if (!cancelled) setSignedThumb(signedUrl);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [doc.fileUrl, doc.storagePath, doc.mimeType, name, dossierId, docId, guarantorId]);
+
+  const url = doc.fileUrl ?? signedThumb;
 
   if (!url && !doc.storagePath) {
     return <div className="h-12 w-16 shrink-0 rounded border border-dashed border-gray-200 bg-gray-50" />;
+  }
+  if (!url && doc.storagePath) {
+    return <div className="h-12 w-16 shrink-0 animate-pulse rounded border border-gray-200 bg-gray-100" />;
   }
 
   const isImg = doc.mimeType?.startsWith("image/") || !!name?.match(/\.(jpe?g|png)$/i);
