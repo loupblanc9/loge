@@ -15,7 +15,16 @@ const schema = z
       .min(32, "JWT_SECRET trop court (minimum 32 caractères)."),
     MAX_FILE_BYTES: z.coerce.number().default(10 * 1024 * 1024),
     UPLOAD_DIR: z.string().default("./uploads"),
-    STORAGE_DRIVER: z.enum(["local", "s3", "supabase"]).default("local"),
+    /**
+     * `local` | `s3` | `supabase` — normalisation (trim, guillemets, casse) pour éviter les erreurs Vercel copier-coller.
+     */
+    STORAGE_DRIVER: z.preprocess((raw) => {
+      if (raw === undefined || raw === null) return "local";
+      let s = String(raw).trim();
+      s = s.replace(/^\uFEFF/, "").replace(/^["']|["']$/g, "");
+      if (s === "") return "local";
+      return s.toLowerCase();
+    }, z.enum(["local", "s3", "supabase"])),
     S3_BUCKET: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_ACCESS_KEY_ID: z.string().optional(),
